@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>вава</title><link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎄</text></svg>">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font:16px/1.6 system-ui,Arial;background:linear-gradient(160deg,#0b1230 0%,#131a44 45%,#1d0f33 100%);color:#e8eeff;min-height:100vh}
+.wrap{max-width:900px;margin:0 auto;padding:70px 20px}
+.hero{text-align:center;padding:60px 0}
+.hero h1{font-size:clamp(2rem,6vw,3.4rem);background:linear-gradient(90deg,#ffd700,#ff7b54,#ffd700);-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 3s linear infinite}
+@keyframes shine{to{background-position:200% center}}
+.hero .sub{color:#b8c6e8;font-size:1.15rem;margin-top:14px}
+.badge{display:inline-block;background:rgba(255,215,0,.12);border:1px solid rgba(255,215,0,.4);color:#ffd700;padding:7px 16px;border-radius:99px;font-size:.85rem;margin-bottom:20px}
+.card{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);backdrop-filter:blur(10px);border-radius:20px;padding:34px;margin:26px 0;box-shadow:0 10px 40px rgba(0,0,0,.35);transition:.3s}
+.card:hover{transform:translateY(-4px);border-color:rgba(255,215,0,.45)}
+h2{font-size:1.5rem;margin-bottom:12px}
+a.btn{display:inline-block;background:linear-gradient(90deg,#ffd700,#ff7b54);color:#1a1030;font-weight:700;padding:14px 30px;border-radius:99px;text-decoration:none;margin-top:20px;box-shadow:0 8px 25px rgba(255,180,0,.35);transition:.3s}
+a.btn:hover{transform:scale(1.05)}
+</style></head><body>
+<div class="wrap">
+  <div class="hero">
+    <div class="badge">🎄 Новогодняя акция — успей заказать до конца года!</div>
+    <h1>вава</h1>
+    <div class="sub">вава</div>
+  </div>
+  <div class="card"><h2>✨ Что вы получите</h2>
+    <p>Индивидуальный подход, честные цены и результат, который радует. Работаем даже в праздники — ёлки тоже хотят сайтов!</p>
+    <a class="btn" href="вава">🎁 Заказать</a>
+  </div>
+  <div class="card"><h2>📞 Контакты</h2><p>вава</p></div>
+</div>
+
+<style>
+.snow{position:fixed;top:-12px;border-radius:50%;background:#fff;opacity:.75;pointer-events:none;animation:fall linear infinite;z-index:999}
+@keyframes fall{to{transform:translateY(110vh)}}
+.trust{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:22px 10px;background:#0e1220;color:#9fb0d0;font:14px/1.4 system-ui;border-top:1px solid #1e2a44}
+.trust div{background:#131a2e;border:1px solid #22304f;border-radius:12px;padding:9px 14px}
+</style>
+<script>
+(function(){for(var i=0;i<40;i++){var s=document.createElement('div');s.className='snow';
+var sz=Math.random()*5+2;s.style.width=s.style.height=sz+'px';
+s.style.left=Math.random()*100+'vw';s.style.animationDuration=(Math.random()*6+5)+'s';
+s.style.animationDelay=(Math.random()*8)+'s';document.body.appendChild(s);}})();
+</script>
+<footer class="trust">
+  <div><b>🔒</b> Безопасная оплата</div><div><b>🛡</b> Защита данных</div>
+  <div><b>📞</b> Поддержка 24/7</div><div><b>✅</b> Гарантия качества</div>
+</footer>
+</body></html>
