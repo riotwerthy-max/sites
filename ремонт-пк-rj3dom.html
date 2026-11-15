@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ремонт пк — услуги</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font:16px/1.7 system-ui,sans-serif;background:#070912;color:#e8ecf6;overflow-x:hidden}
+.blob{position:fixed;border-radius:50%;filter:blur(90px);opacity:.3;z-index:0;animation:drift 14s ease-in-out infinite alternate}
+.b1{width:420px;height:420px;background:#5b4bff;top:-120px;left:-100px}
+.b2{width:380px;height:380px;background:#ff4b8d;bottom:-100px;right:-80px;animation-delay:-5s}
+@keyframes drift{to{transform:translate(60px,40px) scale(1.15)}}
+header{position:sticky;top:0;z-index:9;background:#070912cc;backdrop-filter:blur(10px);border-bottom:1px solid #1c2340;padding:12px 18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+nav{display:flex;gap:16px;flex-wrap:wrap}
+nav a{color:#9db1ff;text-decoration:none;font-size:14px;transition:.2s}
+nav a:hover{color:#fff}
+section{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:70px 18px 20px}
+h2{font-size:clamp(24px,4.5vw,36px);text-align:center;margin-bottom:26px;background:linear-gradient(90deg,#9db1ff,#ff9dc8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero{text-align:center;padding-top:100px}
+.hero h1{font-size:clamp(30px,6vw,54px);background:linear-gradient(90deg,#9db1ff,#ff9dc8);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:#aab3cf;max-width:560px;margin:16px auto 26px}
+.btn{display:inline-block;margin:6px;padding:14px 30px;border-radius:14px;background:linear-gradient(90deg,#5b4bff,#8f6bff);color:#fff;font-weight:700;text-decoration:none;box-shadow:0 8px 30px #5b4bff55;transition:.25s}
+.btn:hover{transform:translateY(-3px)}
+.btn.ghost{background:#10142688;border:1px solid #2a3560;box-shadow:none}
+.stats{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin-top:26px}
+.stat{background:#101426cc;border:1px solid #222c4d;border-radius:16px;padding:14px 22px;text-align:center;min-width:130px}
+.stat b{display:block;font-size:24px}
+.stat span{color:#8b96b8;font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px}
+.card{background:#101426cc;border:1px solid #222c4d;border-radius:18px;padding:24px;transition:.25s;text-decoration:none;color:#e8ecf6;display:block}
+.card:hover{transform:translateY(-5px);border-color:#5b4bff88}
+.card .ico{font-size:30px}
+.card h3{margin:10px 0 8px}
+.card p,.rev p,details p{color:#aab3cf;font-size:15px}
+.gal{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.gal img{width:100%;height:200px;object-fit:cover;border-radius:16px;border:1px solid #222c4d;transition:.3s}
+.gal img:hover{transform:scale(1.03);border-color:#5b4bff88}
+.rev{background:#101426cc;border:1px solid #222c4d;border-radius:18px;padding:22px}
+.stars{color:#ffd166;letter-spacing:2px;margin-bottom:8px}
+details{background:#101426cc;border:1px solid #222c4d;border-radius:14px;padding:16px 20px;margin-bottom:10px}
+summary{cursor:pointer;font-weight:600}
+details[open]{border-color:#5b4bff66}
+details p{margin-top:10px}
+.reveal{opacity:0;transform:translateY(24px);transition:.6s}
+.reveal.on{opacity:1;transform:none}
+.cta-box{text-align:center;background:#101426cc;border:1px solid #222c4d;border-radius:22px;padding:44px 20px}
+.trust{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:22px 10px;background:#0e1220;color:#9fb0d0;font:14px/1.4 system-ui;border-top:1px solid #1e2a44;position:relative;z-index:1}
+.trust div{background:#131a2e;border:1px solid #22304f;border-radius:12px;padding:9px 14px}
+</style></head><body>
+<div class="blob b1"></div><div class="blob b2"></div>
+<header><b>ремонт пк</b>
+<nav><a href="#about">О нас</a><a href="#services">Услуги</a><a href="#gallery">Галерея</a><a href="#reviews">Отзывы</a><a href="#faq">Вопросы</a><a href="#contact">Контакты</a></nav>
+</header>
+<section class="hero">
+<h1>ремонт пк</h1>
+<p>ремонт пк чиситка замена апгрейд камплектуюших</p>
+<a class="btn" href="#contact">Заказать услугу →</a>
+<a class="btn ghost" href="#services">Смотреть услуги</a>
+<div class="stats">
+<div class="stat"><b>100+</b><span>выполненных заказов</span></div>
+<div class="stat"><b>24/7</b><span>на связи</span></div>
+<div class="stat"><b>5.0</b><span>средняя оценка</span></div>
+<div class="stat"><b>1–3 дня</b><span>средний срок</span></div>
+</div>
+</section>
+<section id="about" class="reveal">
+<h2>О нас</h2>
+<p style="color:#aab3cf;max-width:640px;margin:0 auto;text-align:center">ремонт пк чиситка замена апгрейд камплектуюших Мы подходим к каждому заказу индивидуально: сначала обсуждаем задачу, потом называем точную цену и срок — без сюрпризов.</p>
+</section>
+<section id="services" class="reveal">
+<h2>Услуги</h2>
+<div class="grid">
+<a class="card" href="#contact"><span class="ico">🤝</span><h3>Индивидуальный подход</h3><p>Каждый заказ обсуждается лично, под вашу задачу и бюджет.</p></a>
+<a class="card" href="#contact"><span class="ico">⚡</span><h3>Быстрое выполнение</h3><p>Чёткие сроки, которые мы соблюдаем. Срочные заказы — welcome.</p></a>
+<a class="card" href="#contact"><span class="ico">💰</span><h3>Честные цены</h3><p>Фиксированная стоимость до начала работы — без скрытых доплат.</p></a>
+<a class="card" href="#contact"><span class="ico">🛡</span><h3>Гарантия</h3><p>Не понравился результат — переделаем бесплатно.</p></a>
+</div>
+</section>
+<section id="gallery" class="reveal">
+<h2>Наши работы</h2>
+<div class="gal">
+<img loading="lazy" alt="Работа 1" src="https://picsum.photos/seed/a1/600/400">
+<img loading="lazy" alt="Работа 2" src="https://picsum.photos/seed/b2/600/400">
+<img loading="lazy" alt="Работа 3" src="https://picsum.photos/seed/c3/600/400">
+<img loading="lazy" alt="Работа 4" src="https://picsum.photos/seed/d4/600/400">
+<img loading="lazy" alt="Работа 5" src="https://picsum.photos/seed/e5/600/400">
+<img loading="lazy" alt="Работа 6" src="https://picsum.photos/seed/f6/600/400">
+</div>
+</section>
+<section id="reviews" class="reveal">
+<h2>Отзывы</h2>
+<div class="grid">
+<div class="rev"><div class="stars">★★★★★</div><p>«Заказывал дважды — оба раза быстро и качественно. Рекомендую!»</p><b>— Артём</b></div>
+<div class="rev"><div class="stars">★★★★★</div><p>«Всё чётко: цена сразу, срок выдержан, вопросы решались за минуты.»</p><b>— Марина</b></div>
+<div class="rev"><div class="stars">★★★★★</div><p>«Приятное общение, результат лучше ожиданий. Вернусь ещё!»</p><b>— Ольга</b></div>
+</div>
+</section>
+<section id="faq" class="reveal">
+<h2>Частые вопросы</h2>
+<details><summary>Сколько стоят услуги?</summary><p>Цена зависит от задачи. Напишите нам — назовём точную стоимость до начала работы.</p></details>
+<details><summary>Как быстро выполните заказ?</summary><p>Обычно 1–3 дня. Срочные заказы обсуждаются отдельно.</p></details>
+<details><summary>Как заказать?</summary><p>Просто напишите в удобный мессенджер — контакты ниже.</p></details>
+<details><summary>Есть ли гарантия?</summary><p>Да. Если что-то не так — бесплатно доработаем.</p></details>
+</section>
+<section id="contact">
+<h2>Связаться</h2>
+<div class="cta-box reveal">
+<div style="font-size:34px">📩</div>
+<p>Напишите — отвечаю быстро: <b>@dfsdfg</b></p><a class="btn" href="https://t.me/dfsdfg">Написать в Telegram →</a>
+</div>
+</section>
+<footer class="trust">
+<div><b>🔒</b> Безопасная оплата</div><div><b>🛡</b> Защита данных</div><div><b>📞</b> Поддержка 24/7</div><div><b>✅</b> Гарантия качества</div>
+</footer>
+<script>
+document.querySelectorAll(".reveal").forEach(function(s){var o=new IntersectionObserver(function(e){if(e[0].isIntersecting){s.classList.add("on");o.disconnect()}},{threshold:.12});o.observe(s)});
+</script>
+</body></html>
