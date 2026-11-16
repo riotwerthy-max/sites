@@ -627,6 +627,15 @@ bot.catch((err) => {
   const msg = err && err.error && err.error.message ? err.error.message : String(err);
   console.log("⚠️ Ошибка (не критично): " + msg);
 });
+// ---------- ВЕБ-СЕРВЕР (порт для Render) ----------
+const http = require("http");
+const PORT = process.env.PORT || 3000;
+http.createServer(function (req, res) {
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+  res.end("Бот работает 24/7 \u{1F384}");
+}).listen(PORT, function () {
+  console.log("Порт " + PORT + " открыт для Render");
+});
 
 bot.start();
 console.log("🎄 Бот v6 PREMIUM+ запущен — grammy 1.46, премиум " + config.PREMIUM_PRICE + "⭐");
