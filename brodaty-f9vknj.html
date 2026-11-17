@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071225">
+  <meta name="description" content="услуги:мужские стрижки, уход за бородой и усами, бритье и дополнительные процедуры">
+  <title>Brodaty</title>
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💇</text></svg>">
+
+<style>
+    :root {
+      --primary: #3a7bd5;
+      --secondary: #00d2ff;
+      --accent: #38bdf8;
+      --bg: #050914;
+      --panel: rgba(13, 24, 48, .72);
+      --text: #f4f7ff;
+      --muted: #a9b9d8;
+      --border: rgba(255,255,255,.13);
+    }
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      background:
+        radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 28%),
+        radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--secondary) 22%, transparent), transparent 30%),
+        linear-gradient(145deg, #030610 0%, #0a142a 48%, #050914 100%);
+    }
+
+body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .22;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+.page { position: relative; z-index: 1; }
+
+.snow-layer,
+    .snow-layer::before,
+    .snow-layer::after {
+      position: fixed;
+      inset: -20px 0 0;
+      pointer-events: none;
+      z-index: 20;
+      background-image:
+        radial-gradient(3px 3px at 20px 30px, #fff, transparent),
+        radial-gradient(2px 2px at 90px 80px, #fff, transparent),
+        radial-gradient(3px 3px at 170px 140px, #d9f4ff, transparent),
+        radial-gradient(2px 2px at 260px 40px, #fff, transparent),
+        radial-gradient(3px 3px at 340px 190px, #d9f4ff, transparent),
+        radial-gradient(2px 2px at 460px 100px, #fff, transparent);
+      background-size: 520px 260px;
+      animation: snowfall 16s linear infinite;
+      opacity: .7;
+    }
+
+.snow-layer::before {
+      content: "";
+      animation-duration: 25s;
+      animation-delay: -8s;
+      transform: scale(1.35);
+      opacity: .45;
+    }
+
+.snow-layer::after {
+      content: "";
+      animation-duration: 32s;
+      animation-delay: -15s;
+      transform: scale(.8);
+      opacity: .3;
+    }
+
+@keyframes snowfall {
+      from { transform: translate3d(0, -260px, 0); }
+      to { transform: translate3d(100px, 100vh, 0); }
+    }
+
+.top-garland {
+      height: 30px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding: 4px 8%;
+      background: rgba(3, 7, 18, .72);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+    }
+
+.bulb {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bulb);
+      box-shadow: 0 0 12px var(--bulb), 0 0 24px var(--bulb);
+      animation: blink 1.8s infinite ease-in-out;
+      animation-delay: var(--blink-delay);
+    }
+
+@keyframes blink {
+      0%, 100% { opacity: .42; transform: scale(.8); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+nav {
+      position: sticky;
+      top: 30px;
+      z-index: 40;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 18px;
+      background: rgba(5, 9, 20, .72);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+
+nav a {
+      color: #dbe7ff;
+      text-decoration: none;
+      font-size: .86rem;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      transition: .25s ease;
+    }
+
+nav a:hover {
+      color: #fff;
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      transform: translateY(-2px);
+    }
+
+.wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: auto;
+    }
+
+.hero {
+      position: relative;
+      min-height: 570px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      overflow: hidden;
+      margin-top: 28px;
+      padding: 90px 24px 76px;
+      border: 1px solid var(--border);
+      border-radius: 34px;
+      background: background-image:linear-gradient(180deg,rgba(5,8,20,.25),rgba(5,8,20,.96)),url('https://images.stroistyle.com/posts/67643836-stil-loft-v-barbershope-1.jpg');
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 30px 90px rgba(0,0,0,.36), inset 0 0 80px rgba(255,255,255,.035);
+    }
+
+.hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(4px);
+      pointer-events: none;
+    }
+
+.hero::before {
+      width: 340px;
+      height: 340px;
+      top: -170px;
+      left: -100px;
+      background: color-mix(in srgb, var(--primary) 28%, transparent);
+      animation: float 7s ease-in-out infinite;
+    }
+
+.hero::after {
+      width: 300px;
+      height: 300px;
+      right: -100px;
+      bottom: -150px;
+      background: color-mix(in srgb, var(--secondary) 28%, transparent);
+      animation: float 9s ease-in-out infinite reverse;
+    }
+
+@keyframes float {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(20px, 18px, 0) scale(1.08); }
+    }
+
+.hero-content { position: relative; z-index: 2; max-width: 780px; }
+
+.badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding: 9px 18px;
+      color: var(--accent);
+      font-size: .86rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+.premium-badge {
+      color: #ffe08a;
+      border-color: rgba(255, 214, 87, .65);
+      box-shadow: 0 0 30px rgba(255, 196, 56, .24);
+    }
+
+.hero h1 {
+      font-size: clamp(2.4rem, 8vw, 5.4rem);
+      line-height: 1.04;
+      letter-spacing: -.06em;
+      background: linear-gradient(100deg, #fff, var(--accent), #fff, var(--secondary));
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradientMove 6s linear infinite;
+    }
+
+@keyframes gradientMove { to { background-position: 300% center; } }
+
+.hero .sub {
+      max-width: 650px;
+      margin: 22px auto 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.2vw, 1.3rem);
+    }
+
+.hero-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+.btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 190px;
+      padding: 15px 24px;
+      color: #07101f;
+      font-weight: 900;
+      text-decoration: none;
+      border-radius: 999px;
+      background: linear-gradient(110deg, var(--primary), var(--accent), var(--secondary));
+      background-size: 220% auto;
+      box-shadow: 0 12px 32px color-mix(in srgb, var(--primary) 28%, transparent);
+      transition: .3s ease;
+      animation: buttonGradient 5s linear infinite;
+    }
+
+.btn:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 18px 44px color-mix(in srgb, var(--accent) 34%, transparent);
+    }
+
+.btn.secondary {
+      color: #eaf1ff;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.07);
+      box-shadow: none;
+      animation: none;
+    }
+
+@keyframes buttonGradient { to { background-position: 220% center; } }
+
+.section { margin: 90px 0; scroll-margin-top: 100px; }
+    .section-title { margin-bottom: 30px; text-align: center; }
+    .section-title small { color: var(--accent); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .section-title h2 { margin-top: 7px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
+
+.services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+    }
+
+.service-card,
+    .review-card,
+    .about-card,
+    .faq {
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035));
+      box-shadow: 0 18px 50px rgba(0,0,0,.2);
+      backdrop-filter: blur(12px);
+    }
+
+.service-card {
+      position: relative;
+      min-height: 235px;
+      overflow: hidden;
+      padding: 26px;
+      border-radius: 24px;
+      transition: .35s ease;
+    }
+
+.service-card:hover {
+      transform: translateY(-9px) rotateX(2deg);
+      border-color: var(--accent);
+      box-shadow: 0 22px 55px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+.service-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: 18px;
+      border-radius: 17px;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 10px 26px color-mix(in srgb, var(--primary) 28%, transparent);
+    }
+
+.service-number {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      color: rgba(255,255,255,.28);
+      font-size: 1.5rem;
+      font-weight: 900;
+    }
+
+.service-card h3 { font-size: 1.22rem; }
+    .service-card p { margin-top: 10px; color: var(--muted); }
+    .price { margin-top: 5px; color: var(--accent); font-weight: 900; }
+    .card-line { width: 58px; height: 3px; margin-top: 22px; border-radius: 9px; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+
+.about-card {
+      padding: clamp(26px, 5vw, 52px);
+      text-align: center;
+      border-radius: 28px;
+      color: #dce7fb;
+      font-size: 1.1rem;
+    }
+
+.review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+
+.review-card { padding: 24px; border-radius: 22px; }
+    .review-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: #07101f; font-size: 1.25rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); }
+    .stars { color: #ffd45c; letter-spacing: 2px; font-size: .82rem; }
+    .review-card p { color: var(--muted); }
+
+.faq { margin: 12px 0; padding: 20px 22px; border-radius: 18px; transition: .25s; }
+    .faq:hover { border-color: var(--accent); }
+    .faq summary { display: flex; justify-content: space-between; cursor: pointer; list-style: none; font-weight: 800; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary span { color: var(--accent); font-size: 1.3rem; transition: .25s; }
+    .faq[open] summary span { transform: rotate(45deg); }
+    .faq p { margin-top: 14px; color: var(--muted); }
+
+.contact-card { text-align: center; }
+    .contact-value { margin-top: 14px; color: var(--accent); font-size: 1.15rem; font-weight: 900; word-break: break-word; }
+
+footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 34px 16px 46px;
+      color: #9eafd0;
+      font-size: .9rem;
+    }
+
+footer span { padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.04); }
+
+.watermark {
+      position: fixed;
+      left: 14px;
+      bottom: 14px;
+      z-index: 60;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(3,7,18,.82);
+      font-size: .78rem;
+      backdrop-filter: blur(12px);
+    }
+
+.watermark a { color: var(--accent); text-decoration: none; }
+
+.reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .7s ease var(--delay), transform .7s ease var(--delay);
+    }
+
+.reveal.show { opacity: 1; transform: none; }
+
+@media (max-width: 600px) {
+      .wrap { width: min(100% - 20px, 1120px); }
+      .hero { min-height: 520px; padding: 70px 16px 55px; border-radius: 25px; }
+      nav { padding: 10px 8px; gap: 5px; }
+      nav a { padding: 6px 9px; font-size: .76rem; }
+      .section { margin: 65px 0; }
+      .btn { width: 100%; }
+    }
+
+@media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="snow-layer"></div>
+
+<div class="top-garland">
+    <i class="bulb" style="--bulb:#ff4d6d;--blink-delay:0s"></i>
+    <i class="bulb" style="--bulb:#ffe066;--blink-delay:.25s"></i>
+    <i class="bulb" style="--bulb:#4dabf7;--blink-delay:.5s"></i>
+    <i class="bulb" style="--bulb:#69db7c;--blink-delay:.75s"></i>
+    <i class="bulb" style="--bulb:#da77f2;--blink-delay:1s"></i>
+    <i class="bulb" style="--bulb:#ff922b;--blink-delay:1.25s"></i>
+    <i class="bulb" style="--bulb:#ff4d6d;--blink-delay:1.5s"></i>
+  </div>
+
+<div class="page">
+    <nav>
+      <a href="#about">О нас</a>
+      <a href="#services">Услуги</a>
+      <a href="#reviews">Отзывы</a>
+      <a href="#faq">Вопросы</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+
+<main class="wrap">
+      <section class="hero">
+        <div class="hero-content">
+          <div class="badge premium-badge">⭐ PREMIUM</div>
+          <h1>Brodaty</h1>
+          <p class="sub">услуги:мужские стрижки, уход за бородой и усами, бритье и дополнительные процедуры</p>
+          <div class="hero-actions">
+            <a class="btn" href="tel:89329238523">💇 Заказать сейчас</a>
+            <a class="btn secondary" href="#services">Посмотреть услуги</a>
+          </div>
+        </div>
+      </section>
+
+<section class="section" id="about">
+        <div class="section-title">
+          <small>✨ Добро пожаловать</small>
+          <h2>Создаём результат, которым хочется делиться</h2>
+        </div>
+        <div class="about-card reveal">
+          услуги:мужские стрижки, уход за бородой и усами, бритье и дополнительные процедуры. Мы работаем быстро, честно и всегда остаёмся на связи — даже в праздники.
+        </div>
+      </section>
+
+<section class="section" id="services">
+        <div class="section-title">
+          <small>💇 Наши возможности</small>
+          <h2>Что мы предлагаем</h2>
+        </div>
+        <div class="services-grid">
+    <article class="service-card reveal" style="--delay:0ms">
+      <div class="service-icon">💇</div>
+      <div class="service-number">01</div>
+      <h3>мужской стрижки составляет от 900 до 1900 рублей</h3>
+      
+      <p>Качественно, быстро и с вниманием к деталям.</p>
+      <div class="card-line"></div>
+    </article>
+  </div>
+      </section>
+
+<section class="section" id="reviews">
+        <div class="section-title">
+          <small>💬 Отзывы клиентов</small>
+          <h2>Нам доверяют</h2>
+        </div>
+        <div class="review-grid">
+    <article class="review-card reveal" style="--delay:0ms">
+      <div class="review-top">
+        <div class="avatar">А</div>
+        <div>
+          <strong>Алексей</strong>
+          <div class="stars">★★★★★</div>
+        </div>
+      </div>
+      <p>«Обратился поздно вечером — ответили сразу, всё сделали быстро и качественно. Рекомендую!»</p>
+    </article>
+  
+    <article class="review-card reveal" style="--delay:100ms">
+      <div class="review-top">
+        <div class="avatar">М</div>
+        <div>
+          <strong>Мария</strong>
+          <div class="stars">★★★★★</div>
+        </div>
+      </div>
+      <p>«Приятное общение, честные цены и отличный результат. Вернусь ещё 👌»</p>
+    </article>
+  
+    <article class="review-card reveal" style="--delay:200ms">
+      <div class="review-top">
+        <div class="avatar">Д</div>
+        <div>
+          <strong>Дмитрий</strong>
+          <div class="stars">★★★★★</div>
+        </div>
+      </div>
+      <p>«Всё чётко и по делу. Ни одного лишнего вопроса, всё сделали как обещали.»</p>
+    </article>
+  </div>
+      </section>
+
+<section class="section" id="faq">
+        <div class="section-title">
+          <small>❄️ Частые вопросы</small>
+          <h2>Всё самое важное</h2>
+        </div>
+        
+    <details class="faq reveal" style="--delay:0ms">
+      <summary>Как заказать? <span>＋</span></summary>
+      <p>Нажмите любую кнопку связи и напишите нам. Мы быстро ответим и уточним детали.</p>
+    </details>
+  
+    <details class="faq reveal" style="--delay:90ms">
+      <summary>Сколько это стоит? <span>＋</span></summary>
+      <p>Цена зависит от задачи. Итоговую стоимость сообщим до начала работы, без скрытых доплат.</p>
+    </details>
+  
+    <details class="faq reveal" style="--delay:180ms">
+      <summary>Есть ли гарантия? <span>＋</span></summary>
+      <p>Да. Мы отвечаем за результат и всегда стараемся решить вопрос до конца.</p>
+    </details>
+  
+      </section>
+
+<section class="section" id="contacts">
+        <div class="section-title">
+          <small>🎁 Свяжитесь с нами</small>
+          <h2>Начнём прямо сейчас?</h2>
+        </div>
+        <div class="about-card contact-card reveal">
+          Напишите нам — ответим быстро и обсудим вашу задачу.
+          <div class="contact-value">89329238523</div>
+          <a class="btn" href="tel:89329238523">🎄 Написать нам</a>
+        </div>
+      </section>
+    </main>
+
+
+
+<footer>
+      <span>🔒 Безопасно</span>
+      <span>⚡ Быстрый ответ</span>
+      <span>🛡 Надёжный сервис</span>
+      <span>🎄 Новогоднее настроение</span>
+    </footer>
+  </div>
+
+<script>
+    (function () {
+      const elements = document.querySelectorAll('.reveal');
+
+if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('show');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12 });
+
+elements.forEach(function (element) {
+          observer.observe(element);
+        });
+      } else {
+        elements.forEach(function (element) {
+          element.classList.add('show');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>
