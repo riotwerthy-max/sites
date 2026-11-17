@@ -106,108 +106,633 @@ function parseReviews(raw) {
 }
 
 function buildSite(catKey, d, prem, themeKey) {
-  const c = Object.assign({}, CATS[catKey]);
-  if (prem && themeKey && THEMES[themeKey]) Object.assign(c, THEMES[themeKey]);
+  const c = Object.assign({}, CATS[catKey] || CATS.visitka);
+
+  if (prem && themeKey && THEMES[themeKey]) {
+    Object.assign(c, THEMES[themeKey]);
+  }
+
   const contact = d.contact || "";
   const services = parseServices(d.services, catKey);
-  const items = services.map((s, i) =>
-    '<div class="card reveal"><div class="num">' + (i + 1) + '</div><h3>' + esc(s.name) + "</h3>" +
-    (s.price ? '<div class="price">' + esc(s.price) + "</div>" : "") +
-    '<p>Качественно, быстро и с вниманием к деталям. Пишите — обсудим детали и сроки.</p></div>'
-  ).join("");
+
+  const items = services.map((s, i) => `
+    <article class="service-card reveal" style="--delay:${i * 90}ms">
+      <div class="service-icon">${c.icon}</div>
+      <div class="service-number">${String(i + 1).padStart(2, "0")}</div>
+      <h3>${esc(s.name)}</h3>
+      ${s.price ? `<div class="price">${esc(s.price)}</div>` : ""}
+      <p>Качественно, быстро и с вниманием к деталям.</p>
+      <div class="card-line"></div>
+    </article>
+  `).join("");
 
   const faq = [
-    ["Как заказать?", "Просто нажмите кнопку ниже или напишите нам — ответим в течение нескольких минут."],
-    ["Сколько это стоит?", "Цена зависит от объёма, но мы всегда честны: озвучиваем итог до старта, без скрытых доплат."],
-    ["Есть ли гарантия?", "Да. Если что-то не так — переделаем или вернём деньги."],
-  ].map((f) => '<div class="faq reveal"><b>' + esc(f[0]) + "</b><p>" + esc(f[1]) + "</p></div>").join("");
+    ["Как заказать?", "Нажмите любую кнопку связи и напишите нам. Мы быстро ответим и уточним детали."],
+    ["Сколько это стоит?", "Цена зависит от задачи. Итоговую стоимость сообщим до начала работы, без скрытых доплат."],
+    ["Есть ли гарантия?", "Да. Мы отвечаем за результат и всегда стараемся решить вопрос до конца."],
+  ].map(([question, answer], i) => `
+    <details class="faq reveal" style="--delay:${i * 90}ms">
+      <summary>${esc(question)} <span>＋</span></summary>
+      <p>${esc(answer)}</p>
+    </details>
+  `).join("");
 
-  const reviews = parseReviews(d.reviews).map((r) => '<div class="rev reveal"><b>' + esc(r[0]) + "</b><p>«" + esc(r[1]) + "»</p></div>").join("");
+  const reviews = parseReviews(d.reviews).map((r, i) => `
+    <article class="review-card reveal" style="--delay:${i * 100}ms">
+      <div class="review-top">
+        <div class="avatar">${esc((r[0] || "А").slice(0, 1).toUpperCase())}</div>
+        <div>
+          <strong>${esc(r[0])}</strong>
+          <div class="stars">★★★★★</div>
+        </div>
+      </div>
+      <p>«${esc(r[1])}»</p>
+    </article>
+  `).join("");
 
-  const wm = prem ? "" :
-    '<div class="wm">🎁 <a href="https://t.me/' + esc(config.BOT_USERNAME || "sitemaket_bot") + '">Сделано в @' + esc(config.BOT_USERNAME || "sitemaket_bot") + "</a></div>";
+  const watermark = prem ? "" : `
+    <div class="watermark">
+      🎁 <a href="https://t.me/${esc(config.BOT_USERNAME || "sitemaket_bot")}">
+        Сделано в @${esc(config.BOT_USERNAME || "sitemaket_bot")}
+      </a>
+    </div>
+  `;
 
-  const badge = prem ? '<div class="badge gold">⭐ PREMIUM</div>' : '<div class="badge">' + c.icon + " " + esc(c.name) + "</div>";
+  const badge = prem
+    ? `<div class="badge premium-badge">⭐ PREMIUM</div>`
+    : `<div class="badge">${c.icon} ${esc(c.name)}</div>`;
 
-  const heroBg = (prem && d.photo && /^https?:\/\//i.test(d.photo))
-    ? "background-image:url('" + esc(d.photo) + "');background-size:cover;background-position:center"
+  const heroStyle = prem && d.photo && /^https?:\/\//i.test(d.photo)
+    ? `background-image:linear-gradient(180deg,rgba(5,8,20,.25),rgba(5,8,20,.96)),url('${esc(d.photo)}')`
     : "";
 
+  const safeName = esc(d.name || "Мой проект");
+  const safeSubtitle = esc(d.subtitle || "Красивый сайт для вашего проекта");
+  const safeContact = esc(contact || "Свяжитесь с нами");
+
   return `<!DOCTYPE html>
-<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(d.name)}</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${c.icon}</text></svg>">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{font:16px/1.7 system-ui,Arial,sans-serif;background:linear-gradient(160deg,#0a0e1a 0%,#141a33 50%,#0a0e1a 100%);color:#e8eefc;min-height:100vh}
-nav{position:fixed;top:0;left:0;right:0;z-index:50;display:flex;gap:6px;justify-content:center;flex-wrap:wrap;padding:12px;background:rgba(10,14,26,.75);backdrop-filter:blur(12px);border-bottom:1px solid rgba(255,255,255,.08)}
-nav a{color:#cfd8f0;text-decoration:none;font-size:.85rem;padding:7px 14px;border-radius:99px;border:1px solid rgba(255,255,255,.1);transition:.25s}
-nav a:hover{color:${c.accent};border-color:${c.accent}}
-.wrap{max-width:960px;margin:0 auto;padding:110px 20px 40px}
-.hero{text-align:center;padding:60px 0 40px;border-radius:24px}
-.hero h1{font-size:clamp(2rem,6vw,3.2rem);background:linear-gradient(90deg,${c.g1},${c.g2},${c.g1});-webkit-background-clip:text;background-clip:text;color:transparent;background-size:200% auto;animation:shine 4s linear infinite}
-@keyframes shine{to{background-position:200% center}}
-.hero .sub{color:#aab8dd;font-size:1.15rem;margin-top:14px}
-.badge{display:inline-block;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.18);color:${c.accent};padding:7px 16px;border-radius:99px;font-size:.85rem;margin-bottom:22px}
-.badge.gold{color:#ffd700;border-color:rgba(255,215,0,.5);box-shadow:0 0 20px rgba(255,215,0,.25)}
-section{margin:70px 0;scroll-margin-top:80px}
-h2{font-size:1.7rem;margin-bottom:24px;text-align:center}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px}
-.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:28px;transition:.3s;backdrop-filter:blur(8px)}
-.card:hover{transform:translateY(-6px);border-color:${c.accent};box-shadow:0 15px 40px rgba(0,0,0,.4)}
-.card .num{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;margin-bottom:14px;background:linear-gradient(135deg,${c.g1},${c.g2});color:#0a0e1a}
-.card h3{margin-bottom:8px}
-.price{color:${c.accent};font-weight:800;margin-bottom:8px}
-.rev{background:rgba(255,255,255,.05);border-left:3px solid ${c.accent};border-radius:0 16px 16px 0;padding:20px 24px;margin:14px 0}
-.faq{background:rgba(255,255,255,.05);border-radius:16px;padding:20px 24px;margin:12px 0}
-.about{background:rgba(255,255,255,.05);border-radius:24px;padding:34px;border:1px solid rgba(255,255,255,.1);text-align:center;font-size:1.05rem}
-a.btn{display:inline-block;background:linear-gradient(90deg,${c.g1},${c.g2});color:#0a0e1a;font-weight:800;padding:16px 38px;border-radius:99px;text-decoration:none;margin-top:24px;box-shadow:0 8px 28px rgba(0,0,0,.4);transition:.3s;font-size:1.05rem}
-a.btn:hover{transform:scale(1.06)}
-.reveal{opacity:0;transform:translateY(26px);transition:.7s cubic-bezier(.2,.7,.3,1)}
-.reveal.show{opacity:1;transform:none}
-footer.trust{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:26px 10px;margin-top:60px;color:#93a2c8;font-size:.9rem;background:rgba(255,255,255,.03);border-top:1px solid rgba(255,255,255,.08)}
-footer.trust div{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:8px 14px}
-.wm{position:fixed;left:14px;bottom:14px;z-index:60;background:rgba(10,14,26,.85);border:1px solid rgba(255,255,255,.15);border-radius:99px;padding:8px 16px;font-size:.8rem;backdrop-filter:blur(8px)}
-.wm a{color:${c.accent};text-decoration:none}
-</style></head><body>
-<nav>
-  <a href="#about">О нас</a><a href="#services">Услуги</a><a href="#reviews">Отзывы</a><a href="#faq">Вопросы</a><a href="#contacts">Контакты</a>
-</nav>
-<div class="wrap">
-  <div class="hero" style="${heroBg}">
-    ${badge}
-    <h1>${esc(d.name)}</h1>
-    <div class="sub">${esc(d.subtitle)}</div>
-    <a class="btn" href="${linkify(contact)}">${c.icon} Заказать сейчас</a>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#071225">
+  <meta name="description" content="${safeSubtitle}">
+  <title>${safeName}</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${c.icon}</text></svg>">
+
+  <style>
+    :root {
+      --primary: ${c.g1};
+      --secondary: ${c.g2};
+      --accent: ${c.accent};
+      --bg: #050914;
+      --panel: rgba(13, 24, 48, .72);
+      --text: #f4f7ff;
+      --muted: #a9b9d8;
+      --border: rgba(255,255,255,.13);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      line-height: 1.65;
+      background:
+        radial-gradient(circle at 15% 10%, color-mix(in srgb, var(--primary) 22%, transparent), transparent 28%),
+        radial-gradient(circle at 85% 20%, color-mix(in srgb, var(--secondary) 22%, transparent), transparent 30%),
+        linear-gradient(145deg, #030610 0%, #0a142a 48%, #050914 100%);
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: .22;
+      background-image:
+        linear-gradient(rgba(255,255,255,.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.035) 1px, transparent 1px);
+      background-size: 44px 44px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    .page { position: relative; z-index: 1; }
+
+    .snow-layer,
+    .snow-layer::before,
+    .snow-layer::after {
+      position: fixed;
+      inset: -20px 0 0;
+      pointer-events: none;
+      z-index: 20;
+      background-image:
+        radial-gradient(3px 3px at 20px 30px, #fff, transparent),
+        radial-gradient(2px 2px at 90px 80px, #fff, transparent),
+        radial-gradient(3px 3px at 170px 140px, #d9f4ff, transparent),
+        radial-gradient(2px 2px at 260px 40px, #fff, transparent),
+        radial-gradient(3px 3px at 340px 190px, #d9f4ff, transparent),
+        radial-gradient(2px 2px at 460px 100px, #fff, transparent);
+      background-size: 520px 260px;
+      animation: snowfall 16s linear infinite;
+      opacity: .7;
+    }
+
+    .snow-layer::before {
+      content: "";
+      animation-duration: 25s;
+      animation-delay: -8s;
+      transform: scale(1.35);
+      opacity: .45;
+    }
+
+    .snow-layer::after {
+      content: "";
+      animation-duration: 32s;
+      animation-delay: -15s;
+      transform: scale(.8);
+      opacity: .3;
+    }
+
+    @keyframes snowfall {
+      from { transform: translate3d(0, -260px, 0); }
+      to { transform: translate3d(100px, 100vh, 0); }
+    }
+
+    .top-garland {
+      height: 30px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-around;
+      align-items: flex-start;
+      padding: 4px 8%;
+      background: rgba(3, 7, 18, .72);
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .bulb {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--bulb);
+      box-shadow: 0 0 12px var(--bulb), 0 0 24px var(--bulb);
+      animation: blink 1.8s infinite ease-in-out;
+      animation-delay: var(--blink-delay);
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: .42; transform: scale(.8); }
+      50% { opacity: 1; transform: scale(1.25); }
+    }
+
+    nav {
+      position: sticky;
+      top: 30px;
+      z-index: 40;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 14px 18px;
+      background: rgba(5, 9, 20, .72);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(18px);
+    }
+
+    nav a {
+      color: #dbe7ff;
+      text-decoration: none;
+      font-size: .86rem;
+      padding: 7px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      transition: .25s ease;
+    }
+
+    nav a:hover {
+      color: #fff;
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 15%, transparent);
+      transform: translateY(-2px);
+    }
+
+    .wrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: auto;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 570px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      overflow: hidden;
+      margin-top: 28px;
+      padding: 90px 24px 76px;
+      border: 1px solid var(--border);
+      border-radius: 34px;
+      background: ${heroStyle || "linear-gradient(135deg, rgba(12,24,52,.9), rgba(8,13,31,.76))"};
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 30px 90px rgba(0,0,0,.36), inset 0 0 80px rgba(255,255,255,.035);
+    }
+
+    .hero::before,
+    .hero::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(4px);
+      pointer-events: none;
+    }
+
+    .hero::before {
+      width: 340px;
+      height: 340px;
+      top: -170px;
+      left: -100px;
+      background: color-mix(in srgb, var(--primary) 28%, transparent);
+      animation: float 7s ease-in-out infinite;
+    }
+
+    .hero::after {
+      width: 300px;
+      height: 300px;
+      right: -100px;
+      bottom: -150px;
+      background: color-mix(in srgb, var(--secondary) 28%, transparent);
+      animation: float 9s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+      50% { transform: translate3d(20px, 18px, 0) scale(1.08); }
+    }
+
+    .hero-content { position: relative; z-index: 2; max-width: 780px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 24px;
+      padding: 9px 18px;
+      color: var(--accent);
+      font-size: .86rem;
+      font-weight: 800;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      border: 1px solid color-mix(in srgb, var(--accent) 55%, transparent);
+      border-radius: 999px;
+      background: rgba(255,255,255,.07);
+      box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .premium-badge {
+      color: #ffe08a;
+      border-color: rgba(255, 214, 87, .65);
+      box-shadow: 0 0 30px rgba(255, 196, 56, .24);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.4rem, 8vw, 5.4rem);
+      line-height: 1.04;
+      letter-spacing: -.06em;
+      background: linear-gradient(100deg, #fff, var(--accent), #fff, var(--secondary));
+      background-size: 300% auto;
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      animation: gradientMove 6s linear infinite;
+    }
+
+    @keyframes gradientMove { to { background-position: 300% center; } }
+
+    .hero .sub {
+      max-width: 650px;
+      margin: 22px auto 0;
+      color: var(--muted);
+      font-size: clamp(1rem, 2.2vw, 1.3rem);
+    }
+
+    .hero-actions {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 190px;
+      padding: 15px 24px;
+      color: #07101f;
+      font-weight: 900;
+      text-decoration: none;
+      border-radius: 999px;
+      background: linear-gradient(110deg, var(--primary), var(--accent), var(--secondary));
+      background-size: 220% auto;
+      box-shadow: 0 12px 32px color-mix(in srgb, var(--primary) 28%, transparent);
+      transition: .3s ease;
+      animation: buttonGradient 5s linear infinite;
+    }
+
+    .btn:hover {
+      transform: translateY(-4px) scale(1.03);
+      box-shadow: 0 18px 44px color-mix(in srgb, var(--accent) 34%, transparent);
+    }
+
+    .btn.secondary {
+      color: #eaf1ff;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.07);
+      box-shadow: none;
+      animation: none;
+    }
+
+    @keyframes buttonGradient { to { background-position: 220% center; } }
+
+    .section { margin: 90px 0; scroll-margin-top: 100px; }
+    .section-title { margin-bottom: 30px; text-align: center; }
+    .section-title small { color: var(--accent); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+    .section-title h2 { margin-top: 7px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+      gap: 18px;
+    }
+
+    .service-card,
+    .review-card,
+    .about-card,
+    .faq {
+      border: 1px solid var(--border);
+      background: linear-gradient(145deg, rgba(255,255,255,.09), rgba(255,255,255,.035));
+      box-shadow: 0 18px 50px rgba(0,0,0,.2);
+      backdrop-filter: blur(12px);
+    }
+
+    .service-card {
+      position: relative;
+      min-height: 235px;
+      overflow: hidden;
+      padding: 26px;
+      border-radius: 24px;
+      transition: .35s ease;
+    }
+
+    .service-card:hover {
+      transform: translateY(-9px) rotateX(2deg);
+      border-color: var(--accent);
+      box-shadow: 0 22px 55px color-mix(in srgb, var(--accent) 18%, transparent);
+    }
+
+    .service-icon {
+      display: grid;
+      place-items: center;
+      width: 52px;
+      height: 52px;
+      margin-bottom: 18px;
+      border-radius: 17px;
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      box-shadow: 0 10px 26px color-mix(in srgb, var(--primary) 28%, transparent);
+    }
+
+    .service-number {
+      position: absolute;
+      top: 18px;
+      right: 22px;
+      color: rgba(255,255,255,.28);
+      font-size: 1.5rem;
+      font-weight: 900;
+    }
+
+    .service-card h3 { font-size: 1.22rem; }
+    .service-card p { margin-top: 10px; color: var(--muted); }
+    .price { margin-top: 5px; color: var(--accent); font-weight: 900; }
+    .card-line { width: 58px; height: 3px; margin-top: 22px; border-radius: 9px; background: linear-gradient(90deg, var(--primary), var(--accent)); }
+
+    .about-card {
+      padding: clamp(26px, 5vw, 52px);
+      text-align: center;
+      border-radius: 28px;
+      color: #dce7fb;
+      font-size: 1.1rem;
+    }
+
+    .review-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 18px;
+    }
+
+    .review-card { padding: 24px; border-radius: 22px; }
+    .review-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+    .avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: #07101f; font-size: 1.25rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); }
+    .stars { color: #ffd45c; letter-spacing: 2px; font-size: .82rem; }
+    .review-card p { color: var(--muted); }
+
+    .faq { margin: 12px 0; padding: 20px 22px; border-radius: 18px; transition: .25s; }
+    .faq:hover { border-color: var(--accent); }
+    .faq summary { display: flex; justify-content: space-between; cursor: pointer; list-style: none; font-weight: 800; }
+    .faq summary::-webkit-details-marker { display: none; }
+    .faq summary span { color: var(--accent); font-size: 1.3rem; transition: .25s; }
+    .faq[open] summary span { transform: rotate(45deg); }
+    .faq p { margin-top: 14px; color: var(--muted); }
+
+    .contact-card { text-align: center; }
+    .contact-value { margin-top: 14px; color: var(--accent); font-size: 1.15rem; font-weight: 900; word-break: break-word; }
+
+    footer {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 34px 16px 46px;
+      color: #9eafd0;
+      font-size: .9rem;
+    }
+
+    footer span { padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.04); }
+
+    .watermark {
+      position: fixed;
+      left: 14px;
+      bottom: 14px;
+      z-index: 60;
+      padding: 8px 14px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: rgba(3,7,18,.82);
+      font-size: .78rem;
+      backdrop-filter: blur(12px);
+    }
+
+    .watermark a { color: var(--accent); text-decoration: none; }
+
+    .reveal {
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity .7s ease var(--delay), transform .7s ease var(--delay);
+    }
+
+    .reveal.show { opacity: 1; transform: none; }
+
+    @media (max-width: 600px) {
+      .wrap { width: min(100% - 20px, 1120px); }
+      .hero { min-height: 520px; padding: 70px 16px 55px; border-radius: 25px; }
+      nav { padding: 10px 8px; gap: 5px; }
+      nav a { padding: 6px 9px; font-size: .76rem; }
+      .section { margin: 65px 0; }
+      .btn { width: 100%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: .01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: .01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="snow-layer"></div>
+
+  <div class="top-garland">
+    <i class="bulb" style="--bulb:#ff4d6d;--blink-delay:0s"></i>
+    <i class="bulb" style="--bulb:#ffe066;--blink-delay:.25s"></i>
+    <i class="bulb" style="--bulb:#4dabf7;--blink-delay:.5s"></i>
+    <i class="bulb" style="--bulb:#69db7c;--blink-delay:.75s"></i>
+    <i class="bulb" style="--bulb:#da77f2;--blink-delay:1s"></i>
+    <i class="bulb" style="--bulb:#ff922b;--blink-delay:1.25s"></i>
+    <i class="bulb" style="--bulb:#ff4d6d;--blink-delay:1.5s"></i>
   </div>
-  <section id="about"><h2>✨ О нас</h2>
-    <div class="about reveal">${esc(d.subtitle)}. Мы работаем быстро, честно и всегда на связи — включая выходные и праздники.</div>
-  </section>
-  <section id="services"><h2>${c.icon} Услуги</h2>
-    <div class="grid">${items}</div>
-  </section>
-  <section id="reviews"><h2>💬 Отзывы</h2>${reviews}</section>
-  <section id="faq"><h2>❓ Частые вопросы</h2>${faq}</section>
-  <section id="contacts"><h2>📞 Контакты</h2>
-    <div class="about reveal">
-      Связаться с нами проще простого — жми кнопку, отвечаем быстро.
-      <div style="margin-top:10px;color:${c.accent};font-weight:700">${esc(contact)}</div>
-      <a class="btn" href="${linkify(contact)}">🎁 Написать</a>
-    </div>
-  </section>
-</div>
-${wm}
-<footer class="trust">
-  <div>🔒 Безопасная оплата</div><div>🛡 Защита данных</div><div>📞 Поддержка 24/7</div><div>✅ Гарантия качества</div>
-</footer>
-<script>
-(function(){
-  var io=new IntersectionObserver(function(es){es.forEach(function(e){if(e.isIntersecting){e.target.classList.add("show");io.unobserve(e.target)}})},{threshold:.12});
-  document.querySelectorAll(".reveal").forEach(function(el){io.observe(el)});
-})();
-</script>
-</body></html>`;
+
+  <div class="page">
+    <nav>
+      <a href="#about">О нас</a>
+      <a href="#services">Услуги</a>
+      <a href="#reviews">Отзывы</a>
+      <a href="#faq">Вопросы</a>
+      <a href="#contacts">Контакты</a>
+    </nav>
+
+    <main class="wrap">
+      <section class="hero">
+        <div class="hero-content">
+          ${badge}
+          <h1>${safeName}</h1>
+          <p class="sub">${safeSubtitle}</p>
+          <div class="hero-actions">
+            <a class="btn" href="${linkify(contact)}">${c.icon} Заказать сейчас</a>
+            <a class="btn secondary" href="#services">Посмотреть услуги</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="about">
+        <div class="section-title">
+          <small>✨ Добро пожаловать</small>
+          <h2>Создаём результат, которым хочется делиться</h2>
+        </div>
+        <div class="about-card reveal">
+          ${safeSubtitle}. Мы работаем быстро, честно и всегда остаёмся на связи — даже в праздники.
+        </div>
+      </section>
+
+      <section class="section" id="services">
+        <div class="section-title">
+          <small>${c.icon} Наши возможности</small>
+          <h2>Что мы предлагаем</h2>
+        </div>
+        <div class="services-grid">${items}</div>
+      </section>
+
+      <section class="section" id="reviews">
+        <div class="section-title">
+          <small>💬 Отзывы клиентов</small>
+          <h2>Нам доверяют</h2>
+        </div>
+        <div class="review-grid">${reviews}</div>
+      </section>
+
+      <section class="section" id="faq">
+        <div class="section-title">
+          <small>❄️ Частые вопросы</small>
+          <h2>Всё самое важное</h2>
+        </div>
+        ${faq}
+      </section>
+
+      <section class="section" id="contacts">
+        <div class="section-title">
+          <small>🎁 Свяжитесь с нами</small>
+          <h2>Начнём прямо сейчас?</h2>
+        </div>
+        <div class="about-card contact-card reveal">
+          Напишите нам — ответим быстро и обсудим вашу задачу.
+          <div class="contact-value">${safeContact}</div>
+          <a class="btn" href="${linkify(contact)}">🎄 Написать нам</a>
+        </div>
+      </section>
+    </main>
+
+    ${watermark}
+
+    <footer>
+      <span>🔒 Безопасно</span>
+      <span>⚡ Быстрый ответ</span>
+      <span>🛡 Надёжный сервис</span>
+      <span>🎄 Новогоднее настроение</span>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      const elements = document.querySelectorAll('.reveal');
+
+      if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('show');
+              observer.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12 });
+
+        elements.forEach(function (element) {
+          observer.observe(element);
+        });
+      } else {
+        elements.forEach(function (element) {
+          element.classList.add('show');
+        });
+      }
+    })();
+  </script>
+</body>
+</html>`;
 }
 
 // ---------- GITHUB ----------
@@ -626,15 +1151,6 @@ bot.on("message:text", async (ctx) => {
 bot.catch((err) => {
   const msg = err && err.error && err.error.message ? err.error.message : String(err);
   console.log("⚠️ Ошибка (не критично): " + msg);
-});
-// ---------- ВЕБ-СЕРВЕР (порт для Render) ----------
-const http = require("http");
-const PORT = process.env.PORT || 3000;
-http.createServer(function (req, res) {
-  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-  res.end("Бот работает 24/7 \u{1F384}");
-}).listen(PORT, function () {
-  console.log("Порт " + PORT + " открыт для Render");
 });
 
 bot.start();
