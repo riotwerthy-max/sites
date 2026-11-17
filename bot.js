@@ -108,14 +108,14 @@ function parseReviews(raw) {
 function buildSite(catKey, d, prem, themeKey) {
   const c = Object.assign({}, CATS[catKey] || CATS.visitka);
 
-  if (prem && themeKey && THEMES[themeKey]) {
+if (prem && themeKey && THEMES[themeKey]) {
     Object.assign(c, THEMES[themeKey]);
   }
 
-  const contact = d.contact || "";
+const contact = d.contact || "";
   const services = parseServices(d.services, catKey);
 
-  const items = services.map((s, i) => `
+const items = services.map((s, i) => `
     <article class="service-card reveal" style="--delay:${i * 90}ms">
       <div class="service-icon">${c.icon}</div>
       <div class="service-number">${String(i + 1).padStart(2, "0")}</div>
@@ -126,7 +126,7 @@ function buildSite(catKey, d, prem, themeKey) {
     </article>
   `).join("");
 
-  const faq = [
+const faq = [
     ["Как заказать?", "Нажмите любую кнопку связи и напишите нам. Мы быстро ответим и уточним детали."],
     ["Сколько это стоит?", "Цена зависит от задачи. Итоговую стоимость сообщим до начала работы, без скрытых доплат."],
     ["Есть ли гарантия?", "Да. Мы отвечаем за результат и всегда стараемся решить вопрос до конца."],
@@ -137,7 +137,7 @@ function buildSite(catKey, d, prem, themeKey) {
     </details>
   `).join("");
 
-  const reviews = parseReviews(d.reviews).map((r, i) => `
+const reviews = parseReviews(d.reviews).map((r, i) => `
     <article class="review-card reveal" style="--delay:${i * 100}ms">
       <div class="review-top">
         <div class="avatar">${esc((r[0] || "А").slice(0, 1).toUpperCase())}</div>
@@ -150,7 +150,7 @@ function buildSite(catKey, d, prem, themeKey) {
     </article>
   `).join("");
 
-  const watermark = prem ? "" : `
+const watermark = prem ? "" : `
     <div class="watermark">
       🎁 <a href="https://t.me/${esc(config.BOT_USERNAME || "sitemaket_bot")}">
         Сделано в @${esc(config.BOT_USERNAME || "sitemaket_bot")}
@@ -158,19 +158,19 @@ function buildSite(catKey, d, prem, themeKey) {
     </div>
   `;
 
-  const badge = prem
+const badge = prem
     ? `<div class="badge premium-badge">⭐ PREMIUM</div>`
     : `<div class="badge">${c.icon} ${esc(c.name)}</div>`;
 
-  const heroStyle = prem && d.photo && /^https?:\/\//i.test(d.photo)
+const heroStyle = prem && d.photo && /^https?:\/\//i.test(d.photo)
     ? `background-image:linear-gradient(180deg,rgba(5,8,20,.25),rgba(5,8,20,.96)),url('${esc(d.photo)}')`
     : "";
 
-  const safeName = esc(d.name || "Мой проект");
+const safeName = esc(d.name || "Мой проект");
   const safeSubtitle = esc(d.subtitle || "Красивый сайт для вашего проекта");
   const safeContact = esc(contact || "Свяжитесь с нами");
 
-  return `<!DOCTYPE html>
+return `<!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="utf-8">
@@ -179,9 +179,9 @@ function buildSite(catKey, d, prem, themeKey) {
   <meta name="description" content="${safeSubtitle}">
   <title>${safeName}</title>
 
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${c.icon}</text></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${c.icon}</text></svg>">
 
-  <style>
+<style>
     :root {
       --primary: ${c.g1};
       --secondary: ${c.g2};
@@ -193,10 +193,10 @@ function buildSite(catKey, d, prem, themeKey) {
       --border: rgba(255,255,255,.13);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
     html { scroll-behavior: smooth; }
 
-    body {
+body {
       min-height: 100vh;
       overflow-x: hidden;
       color: var(--text);
@@ -208,7 +208,7 @@ function buildSite(catKey, d, prem, themeKey) {
         linear-gradient(145deg, #030610 0%, #0a142a 48%, #050914 100%);
     }
 
-    body::before {
+body::before {
       content: "";
       position: fixed;
       inset: 0;
@@ -222,9 +222,9 @@ function buildSite(catKey, d, prem, themeKey) {
       mask-image: linear-gradient(to bottom, black, transparent 80%);
     }
 
-    .page { position: relative; z-index: 1; }
+.page { position: relative; z-index: 1; }
 
-    .snow-layer,
+.snow-layer,
     .snow-layer::before,
     .snow-layer::after {
       position: fixed;
@@ -243,7 +243,7 @@ function buildSite(catKey, d, prem, themeKey) {
       opacity: .7;
     }
 
-    .snow-layer::before {
+.snow-layer::before {
       content: "";
       animation-duration: 25s;
       animation-delay: -8s;
@@ -251,7 +251,7 @@ function buildSite(catKey, d, prem, themeKey) {
       opacity: .45;
     }
 
-    .snow-layer::after {
+.snow-layer::after {
       content: "";
       animation-duration: 32s;
       animation-delay: -15s;
@@ -259,12 +259,12 @@ function buildSite(catKey, d, prem, themeKey) {
       opacity: .3;
     }
 
-    @keyframes snowfall {
+@keyframes snowfall {
       from { transform: translate3d(0, -260px, 0); }
       to { transform: translate3d(100px, 100vh, 0); }
     }
 
-    .top-garland {
+.top-garland {
       height: 30px;
       position: fixed;
       top: 0;
@@ -280,7 +280,7 @@ function buildSite(catKey, d, prem, themeKey) {
       backdrop-filter: blur(14px);
     }
 
-    .bulb {
+.bulb {
       width: 9px;
       height: 9px;
       border-radius: 50%;
@@ -290,12 +290,12 @@ function buildSite(catKey, d, prem, themeKey) {
       animation-delay: var(--blink-delay);
     }
 
-    @keyframes blink {
+@keyframes blink {
       0%, 100% { opacity: .42; transform: scale(.8); }
       50% { opacity: 1; transform: scale(1.25); }
     }
 
-    nav {
+nav {
       position: sticky;
       top: 30px;
       z-index: 40;
@@ -309,7 +309,7 @@ function buildSite(catKey, d, prem, themeKey) {
       backdrop-filter: blur(18px);
     }
 
-    nav a {
+nav a {
       color: #dbe7ff;
       text-decoration: none;
       font-size: .86rem;
@@ -319,19 +319,19 @@ function buildSite(catKey, d, prem, themeKey) {
       transition: .25s ease;
     }
 
-    nav a:hover {
+nav a:hover {
       color: #fff;
       border-color: var(--accent);
       background: color-mix(in srgb, var(--accent) 15%, transparent);
       transform: translateY(-2px);
     }
 
-    .wrap {
+.wrap {
       width: min(1120px, calc(100% - 32px));
       margin: auto;
     }
 
-    .hero {
+.hero {
       position: relative;
       min-height: 570px;
       display: grid;
@@ -348,7 +348,7 @@ function buildSite(catKey, d, prem, themeKey) {
       box-shadow: 0 30px 90px rgba(0,0,0,.36), inset 0 0 80px rgba(255,255,255,.035);
     }
 
-    .hero::before,
+.hero::before,
     .hero::after {
       content: "";
       position: absolute;
@@ -357,7 +357,7 @@ function buildSite(catKey, d, prem, themeKey) {
       pointer-events: none;
     }
 
-    .hero::before {
+.hero::before {
       width: 340px;
       height: 340px;
       top: -170px;
@@ -366,7 +366,7 @@ function buildSite(catKey, d, prem, themeKey) {
       animation: float 7s ease-in-out infinite;
     }
 
-    .hero::after {
+.hero::after {
       width: 300px;
       height: 300px;
       right: -100px;
@@ -375,14 +375,14 @@ function buildSite(catKey, d, prem, themeKey) {
       animation: float 9s ease-in-out infinite reverse;
     }
 
-    @keyframes float {
+@keyframes float {
       0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
       50% { transform: translate3d(20px, 18px, 0) scale(1.08); }
     }
 
-    .hero-content { position: relative; z-index: 2; max-width: 780px; }
+.hero-content { position: relative; z-index: 2; max-width: 780px; }
 
-    .badge {
+.badge {
       display: inline-flex;
       align-items: center;
       gap: 8px;
@@ -399,13 +399,13 @@ function buildSite(catKey, d, prem, themeKey) {
       box-shadow: 0 0 28px color-mix(in srgb, var(--accent) 18%, transparent);
     }
 
-    .premium-badge {
+.premium-badge {
       color: #ffe08a;
       border-color: rgba(255, 214, 87, .65);
       box-shadow: 0 0 30px rgba(255, 196, 56, .24);
     }
 
-    .hero h1 {
+.hero h1 {
       font-size: clamp(2.4rem, 8vw, 5.4rem);
       line-height: 1.04;
       letter-spacing: -.06em;
@@ -417,16 +417,16 @@ function buildSite(catKey, d, prem, themeKey) {
       animation: gradientMove 6s linear infinite;
     }
 
-    @keyframes gradientMove { to { background-position: 300% center; } }
+@keyframes gradientMove { to { background-position: 300% center; } }
 
-    .hero .sub {
+.hero .sub {
       max-width: 650px;
       margin: 22px auto 0;
       color: var(--muted);
       font-size: clamp(1rem, 2.2vw, 1.3rem);
     }
 
-    .hero-actions {
+.hero-actions {
       display: flex;
       justify-content: center;
       flex-wrap: wrap;
@@ -434,7 +434,7 @@ function buildSite(catKey, d, prem, themeKey) {
       margin-top: 32px;
     }
 
-    .btn {
+.btn {
       display: inline-flex;
       align-items: center;
       justify-content: center;
@@ -451,12 +451,12 @@ function buildSite(catKey, d, prem, themeKey) {
       animation: buttonGradient 5s linear infinite;
     }
 
-    .btn:hover {
+.btn:hover {
       transform: translateY(-4px) scale(1.03);
       box-shadow: 0 18px 44px color-mix(in srgb, var(--accent) 34%, transparent);
     }
 
-    .btn.secondary {
+.btn.secondary {
       color: #eaf1ff;
       border: 1px solid var(--border);
       background: rgba(255,255,255,.07);
@@ -464,20 +464,20 @@ function buildSite(catKey, d, prem, themeKey) {
       animation: none;
     }
 
-    @keyframes buttonGradient { to { background-position: 220% center; } }
+@keyframes buttonGradient { to { background-position: 220% center; } }
 
-    .section { margin: 90px 0; scroll-margin-top: 100px; }
+.section { margin: 90px 0; scroll-margin-top: 100px; }
     .section-title { margin-bottom: 30px; text-align: center; }
     .section-title small { color: var(--accent); font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
     .section-title h2 { margin-top: 7px; font-size: clamp(1.8rem, 4vw, 2.7rem); }
 
-    .services-grid {
+.services-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
       gap: 18px;
     }
 
-    .service-card,
+.service-card,
     .review-card,
     .about-card,
     .faq {
@@ -487,7 +487,7 @@ function buildSite(catKey, d, prem, themeKey) {
       backdrop-filter: blur(12px);
     }
 
-    .service-card {
+.service-card {
       position: relative;
       min-height: 235px;
       overflow: hidden;
@@ -496,13 +496,13 @@ function buildSite(catKey, d, prem, themeKey) {
       transition: .35s ease;
     }
 
-    .service-card:hover {
+.service-card:hover {
       transform: translateY(-9px) rotateX(2deg);
       border-color: var(--accent);
       box-shadow: 0 22px 55px color-mix(in srgb, var(--accent) 18%, transparent);
     }
 
-    .service-icon {
+.service-icon {
       display: grid;
       place-items: center;
       width: 52px;
@@ -514,7 +514,7 @@ function buildSite(catKey, d, prem, themeKey) {
       box-shadow: 0 10px 26px color-mix(in srgb, var(--primary) 28%, transparent);
     }
 
-    .service-number {
+.service-number {
       position: absolute;
       top: 18px;
       right: 22px;
@@ -523,12 +523,12 @@ function buildSite(catKey, d, prem, themeKey) {
       font-weight: 900;
     }
 
-    .service-card h3 { font-size: 1.22rem; }
+.service-card h3 { font-size: 1.22rem; }
     .service-card p { margin-top: 10px; color: var(--muted); }
     .price { margin-top: 5px; color: var(--accent); font-weight: 900; }
     .card-line { width: 58px; height: 3px; margin-top: 22px; border-radius: 9px; background: linear-gradient(90deg, var(--primary), var(--accent)); }
 
-    .about-card {
+.about-card {
       padding: clamp(26px, 5vw, 52px);
       text-align: center;
       border-radius: 28px;
@@ -536,19 +536,19 @@ function buildSite(catKey, d, prem, themeKey) {
       font-size: 1.1rem;
     }
 
-    .review-grid {
+.review-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 18px;
     }
 
-    .review-card { padding: 24px; border-radius: 22px; }
+.review-card { padding: 24px; border-radius: 22px; }
     .review-top { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
     .avatar { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: #07101f; font-size: 1.25rem; font-weight: 900; background: linear-gradient(135deg, var(--primary), var(--accent)); }
     .stars { color: #ffd45c; letter-spacing: 2px; font-size: .82rem; }
     .review-card p { color: var(--muted); }
 
-    .faq { margin: 12px 0; padding: 20px 22px; border-radius: 18px; transition: .25s; }
+.faq { margin: 12px 0; padding: 20px 22px; border-radius: 18px; transition: .25s; }
     .faq:hover { border-color: var(--accent); }
     .faq summary { display: flex; justify-content: space-between; cursor: pointer; list-style: none; font-weight: 800; }
     .faq summary::-webkit-details-marker { display: none; }
@@ -556,10 +556,10 @@ function buildSite(catKey, d, prem, themeKey) {
     .faq[open] summary span { transform: rotate(45deg); }
     .faq p { margin-top: 14px; color: var(--muted); }
 
-    .contact-card { text-align: center; }
+.contact-card { text-align: center; }
     .contact-value { margin-top: 14px; color: var(--accent); font-size: 1.15rem; font-weight: 900; word-break: break-word; }
 
-    footer {
+footer {
       position: relative;
       z-index: 1;
       display: flex;
@@ -571,9 +571,9 @@ function buildSite(catKey, d, prem, themeKey) {
       font-size: .9rem;
     }
 
-    footer span { padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.04); }
+footer span { padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: rgba(255,255,255,.04); }
 
-    .watermark {
+.watermark {
       position: fixed;
       left: 14px;
       bottom: 14px;
@@ -586,17 +586,17 @@ function buildSite(catKey, d, prem, themeKey) {
       backdrop-filter: blur(12px);
     }
 
-    .watermark a { color: var(--accent); text-decoration: none; }
+.watermark a { color: var(--accent); text-decoration: none; }
 
-    .reveal {
+.reveal {
       opacity: 0;
       transform: translateY(28px);
       transition: opacity .7s ease var(--delay), transform .7s ease var(--delay);
     }
 
-    .reveal.show { opacity: 1; transform: none; }
+.reveal.show { opacity: 1; transform: none; }
 
-    @media (max-width: 600px) {
+@media (max-width: 600px) {
       .wrap { width: min(100% - 20px, 1120px); }
       .hero { min-height: 520px; padding: 70px 16px 55px; border-radius: 25px; }
       nav { padding: 10px 8px; gap: 5px; }
@@ -605,7 +605,7 @@ function buildSite(catKey, d, prem, themeKey) {
       .btn { width: 100%; }
     }
 
-    @media (prefers-reduced-motion: reduce) {
+@media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: .01ms !important;
         animation-iteration-count: 1 !important;
@@ -618,7 +618,7 @@ function buildSite(catKey, d, prem, themeKey) {
 <body>
   <div class="snow-layer"></div>
 
-  <div class="top-garland">
+<div class="top-garland">
     <i class="bulb" style="--bulb:#ff4d6d;--blink-delay:0s"></i>
     <i class="bulb" style="--bulb:#ffe066;--blink-delay:.25s"></i>
     <i class="bulb" style="--bulb:#4dabf7;--blink-delay:.5s"></i>
@@ -628,7 +628,7 @@ function buildSite(catKey, d, prem, themeKey) {
     <i class="bulb" style="--bulb:#ff4d6d;--blink-delay:1.5s"></i>
   </div>
 
-  <div class="page">
+<div class="page">
     <nav>
       <a href="#about">О нас</a>
       <a href="#services">Услуги</a>
@@ -637,7 +637,7 @@ function buildSite(catKey, d, prem, themeKey) {
       <a href="#contacts">Контакты</a>
     </nav>
 
-    <main class="wrap">
+<main class="wrap">
       <section class="hero">
         <div class="hero-content">
           ${badge}
@@ -650,7 +650,7 @@ function buildSite(catKey, d, prem, themeKey) {
         </div>
       </section>
 
-      <section class="section" id="about">
+<section class="section" id="about">
         <div class="section-title">
           <small>✨ Добро пожаловать</small>
           <h2>Создаём результат, которым хочется делиться</h2>
@@ -660,7 +660,7 @@ function buildSite(catKey, d, prem, themeKey) {
         </div>
       </section>
 
-      <section class="section" id="services">
+<section class="section" id="services">
         <div class="section-title">
           <small>${c.icon} Наши возможности</small>
           <h2>Что мы предлагаем</h2>
@@ -668,7 +668,7 @@ function buildSite(catKey, d, prem, themeKey) {
         <div class="services-grid">${items}</div>
       </section>
 
-      <section class="section" id="reviews">
+<section class="section" id="reviews">
         <div class="section-title">
           <small>💬 Отзывы клиентов</small>
           <h2>Нам доверяют</h2>
@@ -676,7 +676,7 @@ function buildSite(catKey, d, prem, themeKey) {
         <div class="review-grid">${reviews}</div>
       </section>
 
-      <section class="section" id="faq">
+<section class="section" id="faq">
         <div class="section-title">
           <small>❄️ Частые вопросы</small>
           <h2>Всё самое важное</h2>
@@ -684,7 +684,7 @@ function buildSite(catKey, d, prem, themeKey) {
         ${faq}
       </section>
 
-      <section class="section" id="contacts">
+<section class="section" id="contacts">
         <div class="section-title">
           <small>🎁 Свяжитесь с нами</small>
           <h2>Начнём прямо сейчас?</h2>
@@ -697,9 +697,9 @@ function buildSite(catKey, d, prem, themeKey) {
       </section>
     </main>
 
-    ${watermark}
+${watermark}
 
-    <footer>
+<footer>
       <span>🔒 Безопасно</span>
       <span>⚡ Быстрый ответ</span>
       <span>🛡 Надёжный сервис</span>
@@ -707,11 +707,11 @@ function buildSite(catKey, d, prem, themeKey) {
     </footer>
   </div>
 
-  <script>
+<script>
     (function () {
       const elements = document.querySelectorAll('.reveal');
 
-      if ('IntersectionObserver' in window) {
+if ('IntersectionObserver' in window) {
         const observer = new IntersectionObserver(function (entries) {
           entries.forEach(function (entry) {
             if (entry.isIntersecting) {
@@ -721,7 +721,7 @@ function buildSite(catKey, d, prem, themeKey) {
           });
         }, { threshold: 0.12 });
 
-        elements.forEach(function (element) {
+elements.forEach(function (element) {
           observer.observe(element);
         });
       } else {
@@ -912,7 +912,6 @@ bot.command("take", async (ctx) => {
   await ctx.reply("🔄 Премиум снят: " + id);
 });
 
-
 // ---------- ВЫБОР САЙТА ДЛЯ EDIT/DELETE ----------
 const pickSiteKeyboard = (uid) => {
   const full = mySites[uid] || [];
@@ -992,7 +991,7 @@ bot.on("callback_query:data", async (ctx) => {
       return ctx.reply(CATS[key].icon + " " + CATS[key].name + " — отличный выбор!\n\n" + STEPS[0][0]);
     }
 
-    // --- выбор сайта для edit/delete ---
+// --- выбор сайта для edit/delete ---
     if (d.startsWith("pick:")) {
       const s = sessions.get(uid);
       const idx = parseInt(d.slice(5), 10);
@@ -1001,7 +1000,7 @@ bot.on("callback_query:data", async (ctx) => {
       const file = typeof rec === "string" ? rec : rec.file;
       await ctx.answerCallbackQuery();
 
-      if (s && s.want === "delete") {
+if (s && s.want === "delete") {
         sessions.delete(uid);
         const m = await ctx.reply("⏳ Удаляю сайт…");
         await unpublish(file);
@@ -1010,11 +1009,11 @@ bot.on("callback_query:data", async (ctx) => {
         return ctx.api.editMessageText(m.chat.id, m.message_id, "🗑 Сайт удалён: " + file);
       }
 
-      sessions.set(uid, { mode: "editmenu", siteIndex: idx });
+sessions.set(uid, { mode: "editmenu", siteIndex: idx });
       return ctx.reply("✏️ Что меняем на «" + file + "»?", { reply_markup: editFieldKeyboard() });
     }
 
-    // --- выбор поля редактирования ---
+// --- выбор поля редактирования ---
     if (d.startsWith("edit:")) {
       const field = d.slice(5);
       const s = sessions.get(uid);
@@ -1037,11 +1036,44 @@ bot.on("callback_query:data", async (ctx) => {
       return ctx.reply(prompts[field] || "Отправьте новое значение:");
     }
 
-    await ctx.answerCallbackQuery();
+await ctx.answerCallbackQuery();
   } catch (e) {
     console.log("callback: " + (e && e.message ? e.message : e));
   }
 });
+
+// ---------- ПУБЛИКАЦИЯ (общая для фри и премиум) ----------
+async function finishCreate(ctx, uid, s) {
+  const prem = isPremium(uid);
+  const msgs = ["🛠 Собираю каркас…", "🎨 Наношу дизайн…", "✨ Добавляю анимации…", "🚀 Публикую…"];
+  const progress = await ctx.reply("⏳ " + msgs[0]);
+  for (let i = 1; i < msgs.length; i++) {
+    await new Promise((r) => setTimeout(r, 900));
+    await ctx.api.editMessageText(progress.chat.id, progress.message_id, (i < msgs.length - 1 ? "⏳ " : "") + msgs[i]);
+  }
+
+const file = slug(s.data.name) + ".html";
+  const html = buildSite(s.cat, s.data, prem, s.data.theme);
+
+if (!config.GITHUB_TOKEN || !config.GITHUB_REPO) {
+    const { InputFile } = require("grammy");
+    return ctx.replyWithDocument(new InputFile(Buffer.from(html, "utf8"), file));
+  }
+
+await publish(file, html);
+  stats.sites++;
+  save("stats.json", stats);
+  (mySites[uid] = mySites[uid] || []).push({ file, cat: s.cat, data: s.data });
+  save("mysites.json", mySites);
+
+await ctx.api.editMessageText(progress.chat.id, progress.message_id, "✅ Готово!");
+  await ctx.reply(
+    (prem ? "⭐ PREMIUM-сайт готов! Без водяных знаков.\n\n" : "🎁 Сайт готов (с меткой фри-версии)!\n\n") +
+    "⏳ Подождите 1–2 минуты — потом открывайте:\n\n" + siteLink(file) +
+    (prem ? "\n\n✏️ Изменить сайт: /edit — текст, фото, тема" : "\n\n⭐ Премиум убирает метку и открывает /edit, /delete, темы и фото"),
+    { reply_markup: { inline_keyboard: [[{ text: "🔗 Открыть сайт", url: siteLink(file) }]] } }
+  );
+}
 
 // ---------- ДИАЛОГ: создание + редактирование ----------
 bot.on("message:text", async (ctx) => {
@@ -1049,24 +1081,24 @@ bot.on("message:text", async (ctx) => {
   const s = sessions.get(uid);
   if (!s) return ctx.reply("Выберите действие в меню 👇", MAIN_KB);
 
-  try {
+try {
     // --- РЕЖИМ РЕДАКТИРОВАНИЯ ---
     if (s.mode === "editfield") {
       let val = ctx.message.text.trim();
       const rec = (mySites[uid] || [])[s.siteIndex];
       if (!rec || typeof rec === "string") { sessions.delete(uid); return ctx.reply("⚠️ Сайт не найден. Начните заново с /edit"); }
 
-      if (s.field === "theme") {
-        const t = val.match(/[1-4]/);
+if (s.field === "theme") {
+        const t = val.match(/^[1-4]$/);
         if (!t && val !== "-") return ctx.reply("🎨 Отправьте цифру 1–4 или «-» для стандартной темы.");
         val = t ? t[0] : "";
       }
       if (val === "-") val = "";
 
-      rec.data = rec.data || {};
+rec.data = rec.data || {};
       rec.data[s.field] = val;
 
-      const progress = await ctx.reply("⏳ Пересобираю сайт…");
+const progress = await ctx.reply("⏳ Пересобираю сайт…");
       const html = buildSite(rec.cat, rec.data, true, rec.data.theme);
       await publish(rec.file, html);
       save("mysites.json", mySites);
@@ -1080,67 +1112,39 @@ bot.on("message:text", async (ctx) => {
       return;
     }
 
-    // --- СОЗДАНИЕ: базовые шаги ---
-    if (s.mode !== "create") return ctx.reply("Выберите действие в меню 👇", MAIN_KB);
-    const field = STEPS[s.step][1];
-    val = ctx.message.text.trim();
-    if (field === "services" && val === "-") val = "";
-    s.data[field] = val;
-    s.step++;
+if (s.mode !== "create") return ctx.reply("Выберите действие в меню 👇", MAIN_KB);
 
-    if (s.step < STEPS.length) {
-      return ctx.reply(STEPS[s.step][0]);
-    }
-
-    // --- ПРЕМИУМ-ШАГИ ---
-    if (isPremium(uid)) {
+// --- ПРЕМИУМ-ШАГИ (когда 4 базовых ответа уже получены) ---
+    if (s.step >= STEPS.length) {
+      if (!isPremium(uid)) return await finishCreate(ctx, uid, s);
       const pf = PREM_STEPS[s.premStep][1];
       let pval = ctx.message.text.trim();
       if (pf === "theme") {
-        const t = pval.match(/[1-4]/);
+        const t = pval.match(/^[1-4]$/);
         if (!t && pval !== "-") return ctx.reply("🎨 Отправьте цифру 1–4 или «-» для стандартной темы.");
         pval = t ? t[0] : "";
       }
       if (pval === "-") pval = "";
       s.data[pf] = pval;
       s.premStep++;
-
-      if (s.premStep < PREM_STEPS.length) {
-        return ctx.reply(PREM_STEPS[s.premStep][0]);
-      }
+      if (s.premStep < PREM_STEPS.length) return ctx.reply(PREM_STEPS[s.premStep][0]);
+      sessions.delete(uid);
+      return await finishCreate(ctx, uid, s);
     }
 
-    // --- ПУБЛИКАЦИЯ ---
-    sessions.delete(uid);
-    const prem = isPremium(uid);
-    const msgs = ["🛠 Собираю каркас…", "🎨 Наношу дизайн…", "✨ Добавляю анимации…", "🚀 Публикую…"];
-    const progress = await ctx.reply("⏳ " + msgs[0]);
-    for (let i = 1; i < msgs.length; i++) {
-      await new Promise((r) => setTimeout(r, 900));
-      await ctx.api.editMessageText(progress.chat.id, progress.message_id, "" + (i < msgs.length - 1 ? "⏳ " : "") + msgs[i]);
-    }
+// --- БАЗОВЫЕ ШАГИ (4 вопроса) ---
+    const field = STEPS[s.step][1];
+    let val = ctx.message.text.trim();
+    if (field === "services" && val === "-") val = "";
+    s.data[field] = val;
+    s.step++;
 
-    const file = slug(s.data.name) + ".html";
-    const html = buildSite(s.cat, s.data, prem, s.data.theme);
+if (s.step < STEPS.length) return ctx.reply(STEPS[s.step][0]);
 
-    if (!config.GITHUB_TOKEN || !config.GITHUB_REPO) {
-      const { InputFile } = require("grammy");
-      return ctx.replyWithDocument(new InputFile(Buffer.from(html, "utf8"), file));
-    }
+if (isPremium(uid)) return ctx.reply(PREM_STEPS[0][0]);
 
-    await publish(file, html);
-    stats.sites++;
-    save("stats.json", stats);
-    (mySites[uid] = mySites[uid] || []).push({ file, cat: s.cat, data: s.data });
-    save("mysites.json", mySites);
-
-    await ctx.api.editMessageText(progress.chat.id, progress.message_id, "✅ Готово!");
-    await ctx.reply(
-      (prem ? "⭐ PREMIUM-сайт готов! Без водяных знаков.\n\n" : "🎁 Сайт готов (с меткой фри-версии)!\n\n") +
-      "⏳ Подождите 1–2 минуты — потом открывайте:\n\n" + siteLink(file) +
-      (prem ? "\n\n✏️ Изменить сайт: /edit — текст, фото, тема" : "\n\n⭐ Премиум убирает метку и открывает /edit, /delete, темы и фото"),
-      { reply_markup: { inline_keyboard: [[{ text: "🔗 Открыть сайт", url: siteLink(file) }]] } }
-    );
+sessions.delete(uid);
+    return await finishCreate(ctx, uid, s);
   } catch (e) {
     console.log("Создание сайта: " + (e && e.message ? e.message : e));
     await ctx.reply("⚠️ Не удалось опубликовать сайт. Попробуйте ещё раз (GitHub может быть занят деплоем — подождите минуту).", MAIN_KB);
@@ -1152,6 +1156,14 @@ bot.catch((err) => {
   const msg = err && err.error && err.error.message ? err.error.message : String(err);
   console.log("⚠️ Ошибка (не критично): " + msg);
 });
+
+// ---------- МИНИ-ВЕБ-СЕРВЕР (порт для Render) ----------
+const http = require("http");
+const PORT = process.env.PORT || 3000;
+http.createServer((req, res) => {
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
+  res.end("🎄 SITE-MAKER bot работает!");
+}).listen(PORT, () => console.log("Порт " + PORT + " открыт для Render"));
 
 bot.start();
 console.log("🎄 Бот v6 PREMIUM+ запущен — grammy 1.46, премиум " + config.PREMIUM_PRICE + "⭐");
