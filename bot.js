@@ -1166,16 +1166,6 @@ http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
   res.end("🎄 SITE-MAKER bot работает!");
 }).listen(PORT, () => console.log("Порт " + PORT + " открыт для Render"));
-// ===== ВЕБ-СЕРВЕР ДЛЯ RENDER =====
-const http = require('http');
-const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/plain' });
-  res.end('Бот работает 🎄');
-});
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Веб-сервер слушает порт ${PORT}`);
-});
 
 bot.start();
 console.log("🎄 Бот v6 PREMIUM+ запущен — grammy 1.46, премиум " + config.PREMIUM_PRICE + "⭐");
