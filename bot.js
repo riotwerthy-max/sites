@@ -21,7 +21,9 @@ let mySites = load("mysites.json", {});
 let users   = load("users.json", {});
 const sessions = new Map();
 
-const isPremium = (id) => !!premium[id];
+// админ всегда премиум (без файла premium.json)
+if (config.ADMIN_ID) premium[String(config.ADMIN_ID)] = true;
+const isPremium = (id) => !!premium[id] || String(id) === String(config.ADMIN_ID);
 
 // миграция старого формата (строки -> объекты, чтобы работал /edit)
 for (const id of Object.keys(mySites)) {
