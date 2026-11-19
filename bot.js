@@ -242,9 +242,10 @@ function backMenu() {
     .text("💪 Спорт", "cat:sports").text("🎤 Шоу", "cat:artist").row()
     .text("💈 Барбершоп", "cat:barber").text("💅 Красота", "cat:beauty").row()
     .text("☕ Кофейня", "cat:coffee").text("🔧 Мастер", "cat:master").row()
-    .text("⭐ Премиум", "premium").text("📊 Статистика", "stats").row()
-    .text("ℹ️ Помощь", "help");
+    .text("🎁 Премиум 5 мин", "trial").text("⭐ Премиум", "premium").row()
+    .text("📊 Статистика", "stats").text("ℹ️ Помощь", "help");
 }
+
 
 const STEP_TEXTS = {
   name: "✍️ Как назовём сайт? (например: «Бородатый»)",
