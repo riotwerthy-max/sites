@@ -291,9 +291,13 @@ async function finish(ctx) {
     console.log("[finish] Опубликовано: " + fileName);
     await editMsg(ctx, m, "⏳ Собираю сайт...\n\n`1/3` Генерирую ✅\n`2/3` Публикую на GitHub ✅\n`3/3` Жду, пока сайт откроется (до 2 мин)... ⏳", { parse_mode: "Markdown" });
     const { url, ready } = await checkSite(fileName, async (i) => {
-      await editMsg(ctx, m, "⏳ Собираю сайт...\n\n`1/3` ✅ `2/3` ✅\n`3/3` GitHub Pages собирает... " + (i * 10) + " сек", { parse_mode: "Markdown" });
-    });
+          const url = BASE_URL + "/" + encodeURIComponent(fileName);
     u.sites.push({ name: u.data.name, url });
+    await editMsg(ctx, m, "✅ Готово! Твой сайт:\n\n" + url + "\n\n⚠️ Если ссылка пока не открывается — GitHub Pages собирает его 1–2 минуты, просто обнови страницу позже.\n\n📄 " + fileName, {
+      parse_mode: "Markdown",
+      reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url)
+    });
+
     if (ready) {
       await editMsg(ctx, m, "✅ Готово! Твой сайт:\n\n" + url + "\n\n📄 " + fileName, { reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url) });
     } else {
