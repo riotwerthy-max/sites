@@ -7,6 +7,7 @@
   },
   "dependencies": {
     "grammy": "^1.30.0",
-    "qrcode": "^1.5.4"
+    "qrcode": "^1.5.4",
+    "debug": "^4.4.0"
   }
 }
