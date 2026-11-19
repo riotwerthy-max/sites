@@ -272,42 +272,43 @@ function parseQA(text) {
 }
 
 // ---------- Сборка: с видимым прогрессом ----------
+// ИСПРАВЛЕНО: у сообщения нет метода editText — правим через ctx.api.editMessageText
+async function editMsg(ctx, m, text, extra) {
+  try { await ctx.api.editMessageText(m.chat.id, m.message_id, text, extra || {}); }
+  catch (e) { console.error("[edit] " + (e.message || e)); }
+}
+
 async function finish(ctx) {
   const u = U(ctx.from);
-  console.log("[finish] Начинаю сборку для user " + ctx.from.id + ", шаг: " + u.step + ", данных: " + Object.keys(u.data).join(","));
-  let m = await ctx.reply("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу 🎨");
+  console.log("[finish] Сборка для user " + ctx.from.id);
+  const m = await ctx.reply("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу 🎨", { parse_mode: "Markdown" });
   try {
     const { fileName, html } = buildSite(u.data);
-    console.log("[finish] Файл сгенерирован: " + fileName + " (" + Math.round(html.length / 1024) + " КБ)");
-    if (!GITHUB_TOKEN) throw new Error("GITHUB_TOKEN не задан на Render (Environment) — не могу опубликовать");
-    await m.editText("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу ✅\n`2/3` Публикую на GitHub... ⏳");
+    console.log("[finish] Файл: " + fileName + " (" + Math.round(html.length / 1024) + " КБ)");
+    if (!GITHUB_TOKEN) throw new Error("GITHUB_TOKEN не задан на Render");
+    await editMsg(ctx, m, "⏳ Собираю сайт...\n\n`1/3` Генерирую страницу ✅\n`2/3` Публикую на GitHub... ⏳", { parse_mode: "Markdown" });
     await publishSite(fileName, html);
     console.log("[finish] Опубликовано: " + fileName);
-    await m.editText("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу ✅\n`2/3` Публикую на GitHub ✅\n`3/3` Жду, когда сайт откроется (до 2 мин)... ⏳");
+    await editMsg(ctx, m, "⏳ Собираю сайт...\n\n`1/3` Генерирую ✅\n`2/3` Публикую на GitHub ✅\n`3/3` Жду, пока сайт откроется (до 2 мин)... ⏳", { parse_mode: "Markdown" });
     const { url, ready } = await checkSite(fileName, async (i) => {
-      try { await m.editText("⏳ Собираю сайт...\n\n`1/3` Генерирую ✅\n`2/3` Публикую ✅\n`3/3` GitHub Pages собирает сайт... " + (i * 10) + " сек"); } catch (e) {}
+      await editMsg(ctx, m, "⏳ Собираю сайт...\n\n`1/3` ✅ `2/3` ✅\n`3/3` GitHub Pages собирает... " + (i * 10) + " сек", { parse_mode: "Markdown" });
     });
     u.sites.push({ name: u.data.name, url });
     if (ready) {
-      await m.editText("✅ Готово! Твой сайт:\n\n" + url + "\n\n📄 " + fileName, {
-        reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url)
-      });
+      await editMsg(ctx, m, "✅ Готово! Твой сайт:\n\n" + url + "\n\n📄 " + fileName, { reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url) });
     } else {
-      await m.editText("✅ Сайт опубликован! GitHub Pages собирает его ещё минуту-две, потом ссылка оживёт:\n\n" + url + "\n\n📄 " + fileName, {
-        reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url)
-      });
+      await editMsg(ctx, m, "✅ Сайт опубликован! Pages собирает его ещё минуту-две, потом ссылка оживёт:\n\n" + url + "\n\n📄 " + fileName, { reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url) });
     }
     if (adminNotify && ctx.from.id !== ADMIN_ID) {
       try { await ctx.api.sendMessage(ADMIN_ID, "🔔 Новый сайт: " + u.data.name + "\n" + url); } catch (e) {}
     }
   } catch (e) {
     console.error("[finish] ОШИБКА:", e.message);
-    await m.editText("❌ Не получилось: " + e.message + "\n\nНапиши /diag (админу) или попробуй снова через минуту /start");
+    await editMsg(ctx, m, "❌ Не получилось: " + e.message + "\n\nПопробуй снова через минуту: /start");
   }
   u.step = null;
 }
 
-// ---------- Бот ----------
 const bot = new Bot(TG_TOKEN);
 
 bot.command("start", async (ctx) => {
