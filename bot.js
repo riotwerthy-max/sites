@@ -369,6 +369,8 @@ bot.on("callback_query:data", async (ctx) => {
       return askStep(ctx);
     }
     if (data === "skip") { await ctx.answerCallbackQuery(); return nextStep(ctx); }
+         if (data === "trial") { await ctx.answerCallbackQuery(); return startTrial(ctx); }
+
     if (data === "help") { await ctx.answerCallbackQuery(); return ctx.reply("ℹ️ /start — меню, /premium — тариф"); }
     if (data === "stats") { await ctx.answerCallbackQuery(); return sendStats(ctx); }
     if (data === "premium") {
