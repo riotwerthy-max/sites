@@ -209,7 +209,16 @@ p{color:var(--muted)}
 details{background:rgba(13,24,48,.72);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:12px}
 summary{cursor:pointer;font-weight:600}
 details p{margin-top:10px}
-.btn{display:inline-block;margin-top:22px;padding:14px 32px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff;text-decoration:none;font-weight:600}
+.cbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:26px}
+.btn{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:14px 32px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff;text-decoration:none;font-weight:600;transition:.25s}
+.btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 12px 32px rgba(56,189,248,.35)}
+.btn.big{margin:0;padding:16px 34px;font-size:1.05rem}
+.btn.wa{background:linear-gradient(90deg,#25d366,#128c7e)}
+.btn.tg{background:linear-gradient(90deg,#38bdf8,#0284c7)}
+.btn.ig{background:linear-gradient(90deg,#f58529,#dd2a7b)}
+@keyframes pulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.5)}70%{box-shadow:0 0 0 16px rgba(56,189,248,0)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
+.pulse{animation:pulse 2.2s infinite}
+
 footer{border-top:1px solid var(--border);margin-top:60px;padding:34px 0;text-align:center;color:var(--muted);font-size:.9rem}
 @media(max-width:640px){section{padding:44px 0}}
 </style>
@@ -221,14 +230,30 @@ footer{border-top:1px solid var(--border);margin-top:60px;padding:34px 0;text-al
 <div class="badge">${cat.title}</div>
 <h1>${name}</h1>
 <p>${esc(d.bonus || "")}</p>
-${d.premium ? '<a class="btn" href="#contacts">Связаться</a>' : ""}
+<a class="btn pulse" href="#contacts">Связаться</a>
 </section>
 <section id="about"><h2>О нас</h2><p>${esc(d.about || "Расскажите о своей компании в двух словах.")}</p></section>
 <section id="services"><h2>Услуги</h2><div class="grid">${itemsHtml}</div></section>
 ${reviewsHtml ? `<section id="reviews"><h2>Отзывы</h2><div class="grid">${reviewsHtml}</div></section>` : ""}
 ${faqHtml ? `<section id="faq"><h2>Частые вопросы</h2>${faqHtml}</section>` : ""}
-<section id="contacts"><h2>Контакты</h2><p>${esc(d.contacts || "Телефон, адрес и соцсети добавьте здесь.")}</p></section>
-<footer>Сделано с 🎄 Site-Maker</footer>
+<section id="contacts"><h2>Контакты</h2><p>${esc(d.contacts || "Телефон, адрес и соцсети добавьте здесь.")}</p>
+${(() => {
+  const raw = String(d.contacts || "");
+  const pm = raw.match(/(\+?\d[\d\s\-()]{6,}\d)/);
+  const phone = pm ? pm[1].trim() : "";
+  const digits = phone.replace(/\D/g, "");
+  let btns = "";
+  if (phone) btns += `\n<a class="btn big pulse" href="tel:${digits}">📞 ${esc(phone)}</a>`;
+  if (digits.length >= 10) btns += `\n<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬 WhatsApp</a>`;
+  const tg = raw.match(/(?:@|t\.me\/)([A-Za-z0-9_]{4,})/);
+  if (tg) btns += `\n<a class="btn tg" target="_blank" rel="noopener" href="https://t.me/${esc(tg[1])}">✈️ Telegram</a>`;
+  const ig = raw.match(/instagram\.com\/([A-Za-z0-9_.]+)/i);
+  if (ig) btns += `\n<a class="btn ig" target="_blank" rel="noopener" href="https://instagram.com/${esc(ig[1])}">📸 Instagram</a>`;
+  return btns ? `<div class="cbtns">${btns}\n</div>` : "";
+})()}
+</section>
+
+<footer>${d.premium ? "© " + name : "Сделано с 🎄 Site-Maker"}</footer>
 </div>
 </body>
 </html>` };
@@ -323,10 +348,17 @@ const bot = new Bot(TG_TOKEN);
 bot.command("start", async (ctx) => {
   if (ctx.chat?.type !== "private") return;
   U(ctx.from).step = null;
-  await ctx.reply("🎄 Site-Maker " + VERSION + "\n\nПривет" + (ctx.from.first_name ? ", " + ctx.from.first_name : "") +
-    "! Выбери категорию — соберу сайт за минуту.",
-    { reply_markup: backMenu() });
+  const nm = ctx.from.first_name ? esc(ctx.from.first_name) : "друг";
+  await ctx.reply(
+    "🎄 <b>Привет, " + nm + "!</b>\n\n" +
+    "Я — <b>Site-Maker</b>: соберу сайт для твоего бизнеса <b>за 1 минуту</b> и сразу дам рабочую ссылку 🌐\n\n" +
+    "Магазин, барбершоп, кофейня, автосервис, салон — выбирай категорию ниже и отвечай на пару вопросов. Красивый дизайн, отзывы, кнопки звонка и WhatsApp — всё уже внутри.\n\n" +
+    "🎁 <b>Новичок?</b> Жми «🎁 Премиум 5 мин» — попробуй максимум бесплатно прямо сейчас!\n" +
+    "⭐ <b>Премиум</b>: 12 услуг с ценами, 8 отзывов, 8 FAQ и <b>без подписи бота</b> — твой сайт выглядит как у серьёзной компании. Подробности: /premium",
+    { parse_mode: "HTML", reply_markup: backMenu() }
+  );
 });
+
 
 bot.command("help", (ctx) => ctx.reply(
   "ℹ️ Как создать сайт:\n1️⃣ /start → категория\n2️⃣ Ответь на вопросы анкеты\n3️⃣ Получишь рабочую ссылку\n\n" +
@@ -353,8 +385,15 @@ bot.command("diag", (ctx) => {
 });
 
 bot.command("premium", (ctx) => ctx.reply(
-  "⭐ Премиум-тариф — " + PREMIUM_STARS + " ⭐ Stars\n\n• До 12 услуг с ценами\n• 8 отзывов и 8 FAQ\n• Кнопка «Связаться» на сайте",
-  { reply_markup: new InlineKeyboard().text("⭐ Оплатить " + PREMIUM_STARS + " ⭐", "buy_premium") }
+  "⭐ <b>ПРЕМИУМ — " + PREMIUM_STARS + " ⭐ Stars</b>\n\n" +
+  "Что входит:\n" +
+  "🧾 До <b>12 услуг/товаров</b> <i>с ценами</i>\n" +
+  "⭐ До <b>8 отзывов</b> и <b>8 вопросов-ответов</b>\n" +
+  "🚫 <b>Без подписи бота</b> внизу — только твой бренд\n" +
+  "💬 Кнопки звонка, WhatsApp, Telegram — клиенты пишут в 1 тап\n\n" +
+  "Бесплатно: 4 услуги, 3 отзыва, 3 FAQ + подпись «Site-Maker» внизу.\n\n" +
+  "💎 <b>С премиумом сайт выглядит как у компании, а не как визитка.</b>",
+  { parse_mode: "HTML", reply_markup: new InlineKeyboard().text("⭐ Купить за " + PREMIUM_STARS + " ⭐", "buy_premium") }
 ));
 
 bot.on("callback_query:data", async (ctx) => {
@@ -373,10 +412,11 @@ bot.on("callback_query:data", async (ctx) => {
 
     if (data === "help") { await ctx.answerCallbackQuery(); return ctx.reply("ℹ️ /start — меню, /premium — тариф"); }
     if (data === "stats") { await ctx.answerCallbackQuery(); return sendStats(ctx); }
-    if (data === "premium") {
-      await ctx.answerCallbackQuery();
-      return ctx.reply("⭐ Премиум — " + PREMIUM_STARS + " ⭐", { reply_markup: new InlineKeyboard().text("⭐ Оплатить " + PREMIUM_STARS + " ⭐", "buy_premium") });
-    }
+        if (data === "premium") { await ctx.answerCallbackQuery(); return ctx.reply("💎 Подробности и покупка — команда /premium", { reply_markup: new InlineKeyboard().text("⭐ Купить " + PREMIUM_STARS + " ⭐", "buy_premium").text("ℹ️ Что входит", "premium_info") }); }
+    if (data === "premium_info") { await ctx.answerCallbackQuery(); return ctx.reply(
+      "⭐ <b>ПРЕМИУМ — " + PREMIUM_STARS + " ⭐ Stars</b>\n\n" +
+      "🧾 До 12 услуг <i>с ценами</i>\n⭐ 8 отзывов + 8 FAQ\n🚫 Без подписи бота\n💬 Кнопки WhatsApp/Telegram/звонок",
+      { parse_mode: "HTML", reply_markup: new InlineKeyboard().text("⭐ Купить " + PREMIUM_STARS + " ⭐", "buy_premium") }); }
     if (data === "buy_premium") {
       await ctx.answerCallbackQuery();
       return ctx.replyWithInvoice("⭐ Премиум Site-Maker", "Расширенный тариф: 12 услуг, цены, кнопки", "premium_" + ctx.from.id, "XTR", [{ label: PREMIUM_STARS + " ⭐", amount: PREMIUM_STARS }]);
