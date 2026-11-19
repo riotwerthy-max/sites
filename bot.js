@@ -1,17 +1,18 @@
 /* ============================================================
-   Site-Maker v8.2 FIXED — @sitemaket_bot
-   - правка сообщений через ctx.api.editMessageText (без бага)
-   - ссылка отправляется сразу после коммита (без ожидания Pages)
-   - таймауты на все запросы — ничего не висит вечно
-   - /diag — проверка токенов и прав (для админа)
-   - каждое действие пишется в логи Render
+   Site-Maker v9 PREMIUM — @sitemaket_bot
+   - богатый анимированный шаблон сайта для ВСЕХ тарифов
+   - кнопки звонка/WhatsApp/Telegram/Instagram из контактов
+   - пробный премиум 5 минут (кнопка 🎁, один раз)
+   - премиум-сайт без подписи бота (© Название)
+   - /give — админ выдаёт премиум (навсегда / на минуты / off / list)
+   - таймауты на все запросы, логи, /diag
    ============================================================ */
 
 const { Bot, InlineKeyboard } = require("grammy");
 const http = require("http");
 const crypto = require("crypto");
 
-const VERSION = "v8.2 FIXED";
+const VERSION = "v9 PREMIUM";
 
 // ---------- Переменные окружения ----------
 let TG_TOKEN = process.env.TG_TOKEN || "";
@@ -25,8 +26,7 @@ const PREMIUM_STARS = Number(process.env.PREMIUM_PRICE || 100);
 
 if (!TG_TOKEN) { console.error("ОШИБКА: TG_TOKEN не задан. Выходим."); process.exit(1); }
 console.log("[diag] TG_TOKEN: задан ✅");
-console.log("[diag] GITHUB_TOKEN: " + (GITHUB_TOKEN ? "задан ✅" : "НЕ ЗАДАН ❌ — сайты не опубликуются!"));
-console.log("[diag] Репозиторий: " + REPO_OWNER + "/" + REPO_NAME);
+console.log("[diag] GITHUB_TOKEN: " + (GITHUB_TOKEN ? "задан ✅" : "НЕ ЗАДАН ❌"));
 
 // ---------- fetch с таймаутом ----------
 function fetchT(url, opts, ms) {
@@ -45,12 +45,29 @@ http.createServer((req, res) => {
 // ---------- Пользователи ----------
 const users = new Map();
 function U(from) {
-  if (!users.has(from.id)) users.set(from.id, { step: null, data: {}, sites: [], premium: false, trialUsed: false, premiumUntil: 0 });
+  if (!users.has(from.id)) users.set(from.id, { id: from.id, step: null, data: {}, sites: [], premium: false, trialUsed: false, premiumUntil: 0 });
   const u = users.get(from.id);
   if (u.premiumUntil && Date.now() > u.premiumUntil) { u.premium = false; u.premiumUntil = 0; }
   return u;
 }
 let adminNotify = false;
+
+function grantPremium(id, ms, note) {
+  if (!users.has(id)) users.set(id, { id: id, step: null, data: {}, sites: [], premium: false, trialUsed: false, premiumUntil: 0 });
+  const u = users.get(id);
+  u.premium = true;
+  u.premiumUntil = ms ? Date.now() + ms : 0;
+  if (ms) {
+    setTimeout(() => {
+      if (u.premiumUntil && Date.now() >= u.premiumUntil) {
+        u.premium = false;
+        u.premiumUntil = 0;
+        if (id !== ADMIN_ID) bot.api.sendMessage(id, "⏰ Премиум закончился. Продлить: /premium").catch(() => {});
+      }
+    }, ms);
+  }
+  if (note) bot.api.sendMessage(id, note).catch(() => {});
+}
 
 // ---------- Пробный премиум 5 минут ----------
 async function startTrial(ctx) {
@@ -63,19 +80,11 @@ async function startTrial(ctx) {
   }
   if (u.trialUsed) return ctx.reply("🎁 Пробный премиум можно взять только один раз.\n\n⭐ Навсегда: /premium");
   u.trialUsed = true;
-  u.premium = true;
-  u.premiumUntil = Date.now() + 5 * 60 * 1000;
-  await ctx.reply("⭐ ПРЕМИУМ НА 5 МИНУТ АКТИВЕН!\n\n• До 12 услуг с ценами\n• 8 отзывов и 8 FAQ\n• Кнопка «Связаться» на сайте\n\n⏱ Успей собрать сайт: /start");
-  setTimeout(() => {
-    if (u.premiumUntil && Date.now() >= u.premiumUntil) {
-      u.premium = false;
-      u.premiumUntil = 0;
-      ctx.api.sendMessage(ctx.from.id, "⏰ Пробный премиум закончился. Спасибо, что попробовал! ⭐ Полный: /premium").catch(() => {});
-    }
-  }, 5 * 60 * 1000);
+  grantPremium(ctx.from.id, 5 * 60 * 1000, "⭐ ПРЕМИУМ НА 5 МИНУТ АКТИВЕН!\n\n• До 12 услуг с ценами\n• 8 отзывов и 8 FAQ\n• Кнопки контактов\n• Без подписи бота\n\n⏱ Успей собрать сайт: /start");
+  await ctx.reply("⏱ Таймер пошёл! Жми /start и собирай премиум-сайт.");
 }
 
-
+// ---------- Категории, утилиты ----------
 const CATEGORIES = {
   shop:    { title: "🛍 Магазин",       emoji: "🛍" },
   auto:    { title: "🚗 Автосервис",    emoji: "🚗" },
@@ -308,7 +317,6 @@ function backMenu() {
     .text("📊 Статистика", "stats").text("ℹ️ Помощь", "help");
 }
 
-
 const STEP_TEXTS = {
   name: "✍️ Как назовём сайт? (например: «Бородатый»)",
   about: "📝 Опиши компанию в 1–2 предложениях",
@@ -396,10 +404,9 @@ bot.command("start", async (ctx) => {
   );
 });
 
-
 bot.command("help", (ctx) => ctx.reply(
   "ℹ️ Как создать сайт:\n1️⃣ /start → категория\n2️⃣ Ответь на вопросы анкеты\n3️⃣ Получишь рабочую ссылку\n\n" +
-  "⭐ /premium — расширенный тариф\n📊 /stats — статистика\n🔬 /diag — диагностика (админ)\n🔕 /notify on|off — уведомления админу"
+  "⭐ /premium — тариф\n📊 /stats — статистика\n🔬 /diag — диагностика (админ)\n🔕 /notify on|off — уведомления админу\n👑 /give — выдать премиум (админ)"
 ));
 
 async function sendStats(ctx) {
@@ -421,7 +428,7 @@ bot.command("diag", (ctx) => {
   return diagReport(ctx);
 });
 
-bot.command("premium", (ctx) => ctx.reply(
+const PREMIUM_TEXT =
   "⭐ <b>ПРЕМИУМ — " + PREMIUM_STARS + " ⭐ Stars</b>\n\n" +
   "Что входит:\n" +
   "🧾 До <b>12 услуг/товаров</b> <i>с ценами</i>\n" +
@@ -429,9 +436,41 @@ bot.command("premium", (ctx) => ctx.reply(
   "🚫 <b>Без подписи бота</b> внизу — только твой бренд\n" +
   "💬 Кнопки звонка, WhatsApp, Telegram — клиенты пишут в 1 тап\n\n" +
   "Бесплатно: 4 услуги, 3 отзыва, 3 FAQ + подпись «Site-Maker» внизу.\n\n" +
-  "💎 <b>С премиумом сайт выглядит как у компании, а не как визитка.</b>",
+  "💎 <b>С премиумом сайт выглядит как у компании, а не как визитка.</b>";
+
+bot.command("premium", (ctx) => ctx.reply(PREMIUM_TEXT,
   { parse_mode: "HTML", reply_markup: new InlineKeyboard().text("⭐ Купить за " + PREMIUM_STARS + " ⭐", "buy_premium") }
 ));
+
+// ---------- /give: админ выдаёт премиум ----------
+bot.command("give", (ctx) => {
+  if (ctx.from.id !== ADMIN_ID) return ctx.reply("Только для админа 🙂");
+  const args = String(ctx.match || "").trim().split(/\s+/).filter(Boolean);
+  if (!args.length) return ctx.reply("👑 Выдача премиума:\n\n/give <ID> — навсегда\n/give <ID> <минуты> — на время\n/give <ID> off — забрать\n/give list — кто в премиуме\n\nID можно узнать в @userinfobot");
+  if (args[0].toLowerCase() === "list") {
+    const rows = [...users.values()].filter((u) => u.premium)
+      .map((u) => "• " + u.id + (u.id === ADMIN_ID ? " (ты)" : "") + " — " + (u.premiumUntil ? "до " + new Date(u.premiumUntil).toLocaleTimeString("ru-RU") : "навсегда"));
+    return ctx.reply("⭐ Премиум:\n" + (rows.length ? rows.join("\n") : "никого"));
+  }
+  const id = Number(args[0]);
+  if (!id) return ctx.reply("❌ Неверный ID. Это число, например: /give 123456789");
+  if (args[1] && args[1].toLowerCase() === "off") {
+    if (users.has(id)) {
+      const u = users.get(id);
+      u.premium = false;
+      u.premiumUntil = 0;
+      bot.api.sendMessage(id, "⭐ Премиум отключён.").catch(() => {});
+    }
+    return ctx.reply("✅ Премиум снят с " + id);
+  }
+  if (args[1] && !isNaN(Number(args[1]))) {
+    const mins = Number(args[1]);
+    grantPremium(id, mins * 60 * 1000, "⭐ Премиум активирован на " + mins + " мин! Спасибо 🎄");
+    return ctx.reply("✅ Премиум выдан " + id + " на " + mins + " минут");
+  }
+  grantPremium(id, 0, "⭐ Премиум активирован НАВСЕГДА! Спасибо 🎄");
+  ctx.reply("✅ Премиум выдан " + id + " навсегда");
+});
 
 bot.on("callback_query:data", async (ctx) => {
   const data = ctx.callbackQuery.data;
@@ -445,18 +484,13 @@ bot.on("callback_query:data", async (ctx) => {
       return askStep(ctx);
     }
     if (data === "skip") { await ctx.answerCallbackQuery(); return nextStep(ctx); }
-         if (data === "trial") { await ctx.answerCallbackQuery(); return startTrial(ctx); }
-
+    if (data === "trial") { await ctx.answerCallbackQuery(); return startTrial(ctx); }
     if (data === "help") { await ctx.answerCallbackQuery(); return ctx.reply("ℹ️ /start — меню, /premium — тариф"); }
     if (data === "stats") { await ctx.answerCallbackQuery(); return sendStats(ctx); }
-        if (data === "premium") { await ctx.answerCallbackQuery(); return ctx.reply("💎 Подробности и покупка — команда /premium", { reply_markup: new InlineKeyboard().text("⭐ Купить " + PREMIUM_STARS + " ⭐", "buy_premium").text("ℹ️ Что входит", "premium_info") }); }
-    if (data === "premium_info") { await ctx.answerCallbackQuery(); return ctx.reply(
-      "⭐ <b>ПРЕМИУМ — " + PREMIUM_STARS + " ⭐ Stars</b>\n\n" +
-      "🧾 До 12 услуг <i>с ценами</i>\n⭐ 8 отзывов + 8 FAQ\n🚫 Без подписи бота\n💬 Кнопки WhatsApp/Telegram/звонок",
-      { parse_mode: "HTML", reply_markup: new InlineKeyboard().text("⭐ Купить " + PREMIUM_STARS + " ⭐", "buy_premium") }); }
+    if (data === "premium") { await ctx.answerCallbackQuery(); return ctx.reply(PREMIUM_TEXT, { parse_mode: "HTML", reply_markup: new InlineKeyboard().text("⭐ Купить за " + PREMIUM_STARS + " ⭐", "buy_premium") }); }
     if (data === "buy_premium") {
       await ctx.answerCallbackQuery();
-      return ctx.replyWithInvoice("⭐ Премиум Site-Maker", "Расширенный тариф: 12 услуг, цены, кнопки", "premium_" + ctx.from.id, "XTR", [{ label: PREMIUM_STARS + " ⭐", amount: PREMIUM_STARS }]);
+      return ctx.replyWithInvoice("⭐ Премиум Site-Maker", "Расширенный тариф: 12 услуг, цены, без подписи бота", "premium_" + ctx.from.id, "XTR", [{ label: PREMIUM_STARS + " ⭐", amount: PREMIUM_STARS }]);
     }
     await ctx.answerCallbackQuery();
   } catch (e) {
@@ -470,8 +504,9 @@ bot.on("pre_checkout_query", (ctx) => ctx.answerPreCheckoutQuery(true));
 bot.on("message:successful_payment", async (ctx) => {
   const u = U(ctx.from);
   u.premium = true;
-  u.data.premium = true;
-  await ctx.reply("⭐ Премиум активирован! Спасибо! 🎄");
+  u.premiumUntil = 0;
+  if (u.data) u.data.premium = true;
+  await ctx.reply("⭐ Премиум активирован навсегда! Спасибо! 🎄");
 });
 
 bot.on("message:text", async (ctx) => {
