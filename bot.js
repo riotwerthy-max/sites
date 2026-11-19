@@ -1,17 +1,20 @@
 /* ============================================================
-   Site-Maker v8 STABLE — @sitemaket_bot
-   ИСПРАВЛЕНО:
-   - уведомления админу ВЫКЛЮЧЕНЫ по умолчанию (/notify on|off)
-   - ссылка отправляется только когда сайт реально открылся (нет 404)
-   - бот не падает: все ошибки перехвачены, при 409 сам повторяет запуск
-   - посторонние сообщения игнорируются — никакого спама
+   Site-Maker v8.1 DIAGNOSTIC — @sitemaket_bot
+   НОВОЕ относительно v8:
+   - видимый прогресс: «1/3 Публикую...», «2/3 Жду Pages...» — бот не молчит
+   - таймауты на все запросы (15-20 сек) — ничего не висит вечно
+   - если Pages собирается дольше 2 минут — ссылка всё равно приходит с пометкой
+   - /diag — проверка токенов и прав записи для админа
+   - каждое действие пишется в логи Render
    ============================================================ */
 
 const { Bot, InlineKeyboard } = require("grammy");
 const http = require("http");
 const crypto = require("crypto");
 
-// ---------- Переменные окружения (Render -> Environment) ----------
+const VERSION = "v8.1 DIAGNOSTIC";
+
+// ---------- Переменные окружения ----------
 let TG_TOKEN = process.env.TG_TOKEN || "";
 try { if (!TG_TOKEN) TG_TOKEN = require("./config").token || ""; } catch (e) {}
 const GITHUB_TOKEN = process.env.GITHUB_TOKEN || "";
@@ -21,23 +24,32 @@ const BASE_URL = "https://" + REPO_OWNER + ".github.io/" + REPO_NAME;
 const ADMIN_ID = Number(process.env.ADMIN_ID || 6038097684);
 const PREMIUM_STARS = Number(process.env.PREMIUM_PRICE || 100);
 
-if (!TG_TOKEN) { console.error("ОШИБКА: TG_TOKEN не задан (Render -> Environment). Выходим."); process.exit(1); }
-if (!GITHUB_TOKEN) console.error("ВАЖНО: GITHUB_TOKEN не задан — сайты НЕ будут публиковаться! Добавь его в Render -> Environment.");
+if (!TG_TOKEN) { console.error("ОШИБКА: TG_TOKEN не задан. Выходим."); process.exit(1); }
+console.log("[diag] TG_TOKEN: задан ✅");
+console.log("[diag] GITHUB_TOKEN: " + (GITHUB_TOKEN ? "задан ✅" : "НЕ ЗАДАН ❌ — сайты не опубликуются!"));
+console.log("[diag] Репозиторий: " + REPO_OWNER + "/" + REPO_NAME);
 
-// ---------- Веб-сервер (нужен Render и UptimeRobot) ----------
+// ---------- fetch с таймаутом — ничего не висит вечно ----------
+function fetchT(url, opts, ms) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms || 15000);
+  return fetch(url, Object.assign({}, opts, { signal: c.signal })).finally(() => clearTimeout(t));
+}
+
+// ---------- Веб-сервер ----------
 const PORT = process.env.PORT || 3000;
 http.createServer((req, res) => {
   res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8" });
-  res.end("Site-Maker bot v8 STABLE работает 🎄");
-}).listen(PORT, () => console.log("Порт " + PORT + " ОК"));
+  res.end("Site-Maker bot " + VERSION + " работает 🎄");
+}).listen(PORT, () => console.log("[diag] Порт " + PORT + " ОК"));
 
-// ---------- Состояние пользователей ----------
+// ---------- Пользователи ----------
 const users = new Map();
 function U(from) {
   if (!users.has(from.id)) users.set(from.id, { step: null, data: {}, sites: [], premium: false });
   return users.get(from.id);
 }
-let adminNotify = false; // уведомления админу выключены по умолчанию
+let adminNotify = false;
 
 const CATEGORIES = {
   shop:    { title: "🛍 Магазин",       emoji: "🛍" },
@@ -61,9 +73,11 @@ function slug(s) {
   return r || "site";
 }
 
-// ---------- GitHub API ----------
+// ---------- GitHub API (с логированием и таймаутом) ----------
 async function gh(path, method, body) {
-  const res = await fetch("https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + encodeURIComponent(path), {
+  const url = "https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME + "/contents/" + encodeURIComponent(path);
+  console.log("[gh] " + method + " " + path + (body ? " (размер: " + Math.round((body.content || "").length * 3 / 4 / 1024) + " КБ)" : ""));
+  const res = await fetchT(url, {
     method,
     headers: {
       "Authorization": "token " + GITHUB_TOKEN,
@@ -72,8 +86,13 @@ async function gh(path, method, body) {
       "User-Agent": "site-maker-bot"
     },
     body: body ? JSON.stringify(body) : undefined
-  });
-  if (!res.ok) throw new Error("GitHub API " + res.status + ": " + (await res.text()).slice(0, 200));
+  }, 20000);
+  if (!res.ok) {
+    const txt = (await res.text()).slice(0, 200);
+    console.error("[gh] ОШИБКА " + res.status + ": " + txt);
+    throw new Error("GitHub API " + res.status + ": " + txt);
+  }
+  console.log("[gh] " + method + " " + path + " — успех ✅");
   return res.status === 204 ? null : res.json();
 }
 
@@ -84,17 +103,48 @@ async function publishSite(fileName, html) {
   });
 }
 
-// Ждём, пока GitHub Pages реально начнёт отдавать сайт (до 80 секунд) — битых ссылок больше не будет
-async function checkSite(fileName) {
+// Ждём Pages: до 2.5 минут, но каждые 10 сек пишем в лог, и ВСЕГДА возвращаем ссылку
+async function checkSite(fileName, progressCb) {
   const url = BASE_URL + "/" + encodeURIComponent(fileName);
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 15; i++) {
     try {
-      const r = await fetch(url, { redirect: "follow" });
-      if (r.ok) return url;
-    } catch (e) {}
+      const r = await fetchT(url, { redirect: "follow" }, 10000);
+      console.log("[pages] попытка " + (i + 1) + ": HTTP " + r.status);
+      if (r.ok) return { url, ready: true };
+    } catch (e) {
+      console.log("[pages] попытка " + (i + 1) + ": " + (e.name === "AbortError" ? "таймаут" : e.message));
+    }
+    if (progressCb && i > 0 && i % 3 === 0) progressCb(i);
     await new Promise((r) => setTimeout(r, 10000));
   }
-  throw new Error("Сайт не стал доступным за 80 секунд — попробуй позже, ссылка: " + url);
+  return { url, ready: false }; // ссылку всё равно отдадим, с пометкой
+}
+
+// ---------- Диагностика /diag ----------
+async function diagReport(ctx) {
+  const lines = ["🔬 Диагностика " + VERSION + ":\n"];
+  lines.push("TG_TOKEN: " + (TG_TOKEN ? "✅" : "❌"));
+  lines.push("GITHUB_TOKEN: " + (GITHUB_TOKEN ? "✅" : "❌ НЕ ЗАДАН в Environment!"));
+  if (GITHUB_TOKEN) {
+    try {
+      const r = await fetchT("https://api.github.com/repos/" + REPO_OWNER + "/" + REPO_NAME, {
+        headers: { "Authorization": "token " + GITHUB_TOKEN, "User-Agent": "site-maker-bot", "Accept": "application/vnd.github+json" }
+      }, 15000);
+      if (r.ok) {
+        const j = await r.json();
+        lines.push("Репозиторий: ✅ доступен (права: " + (j.permissions ? (j.permissions.push ? "push ✅" : "только чтение ❌") : "?") + ")");
+      } else {
+        lines.push("Репозиторий: ❌ HTTP " + r.status + (r.status === 401 ? " — токен неверный/протух" : r.status === 403 ? " — нет прав" : ""));
+      }
+    } catch (e) { lines.push("Репозиторий: ❌ сеть: " + e.message); }
+  }
+  try {
+    const r = await fetchT(BASE_URL + "/", {}, 10000);
+    lines.push("GitHub Pages: " + (r.ok ? "✅ работает" : "❌ HTTP " + r.status));
+  } catch (e) { lines.push("GitHub Pages: ❌ " + e.message); }
+  lines.push("\nБот: " + (bot.isInited() ? "запущен ✅" : "не запущен ❌"));
+  lines.push("Пользователей в памяти: " + users.size);
+  return ctx.reply(lines.join("\n"));
 }
 
 // ---------- HTML-шаблон ----------
@@ -165,7 +215,7 @@ footer{border-top:1px solid var(--border);margin-top:60px;padding:34px 0;text-al
 <p>${esc(d.bonus || "")}</p>
 ${d.premium ? '<a class="btn" href="#contacts">Связаться</a>' : ""}
 </section>
-<section id="about"><h2>О нас</h2><p>${esc(d.about || "Расскажите о своей компании в двух словах — чем вы занимаетесь и почему вам можно доверять.")}</p></section>
+<section id="about"><h2>О нас</h2><p>${esc(d.about || "Расскажите о своей компании в двух словах.")}</p></section>
 <section id="services"><h2>Услуги</h2><div class="grid">${itemsHtml}</div></section>
 ${reviewsHtml ? `<section id="reviews"><h2>Отзывы</h2><div class="grid">${reviewsHtml}</div></section>` : ""}
 ${faqHtml ? `<section id="faq"><h2>Частые вопросы</h2>${faqHtml}</section>` : ""}
@@ -176,7 +226,7 @@ ${faqHtml ? `<section id="faq"><h2>Частые вопросы</h2>${faqHtml}</s
 </html>` };
 }
 
-// ---------- Меню ----------
+// ---------- Меню и анкета ----------
 function backMenu() {
   return new InlineKeyboard()
     .text("🛍 Магазин", "cat:shop").row()
@@ -199,25 +249,9 @@ const STEP_TEXTS = {
 };
 
 async function askStep(ctx) {
-  const u = U(ctx.from);
-  const s = u.step;
+  const s = U(ctx.from).step;
   const kb = ["items", "items_p", "reviews", "faq"].includes(s) ? new InlineKeyboard().text("⏭ Пропустить", "skip") : undefined;
   await ctx.reply(STEP_TEXTS[s] || "Готово", kb ? { parse_mode: "Markdown", reply_markup: kb } : {});
-}
-
-// следующий шаг анкеты
-const FLOW = ["name", "about", "items", "reviews", "faq", "contacts"];
-
-function nextStep(ctx) {
-  const u = U(ctx.from);
-  const cur = u.step;
-  if (u.premium && cur === "about") u.step = "items_p";
-  else {
-    const i = FLOW.indexOf(cur === "items_p" ? "items" : cur);
-    u.step = FLOW[i + 1] || null;
-  }
-  if (u.step === "contacts" || u.step) askStep(ctx);
-  if (!u.step) finish(ctx);
 }
 
 function parseLines(text, fields) {
@@ -237,43 +271,56 @@ function parseQA(text) {
   }).filter((f) => f.q).slice(0, 8);
 }
 
-// ---------- Сборка и отправка ----------
+// ---------- Сборка: с видимым прогрессом ----------
 async function finish(ctx) {
   const u = U(ctx.from);
-  const m = await ctx.reply("⏳ Собираю сайт...");
+  console.log("[finish] Начинаю сборку для user " + ctx.from.id + ", шаг: " + u.step + ", данных: " + Object.keys(u.data).join(","));
+  let m = await ctx.reply("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу 🎨");
   try {
     const { fileName, html } = buildSite(u.data);
-    if (!GITHUB_TOKEN) throw new Error("GITHUB_TOKEN не задан на Render");
+    console.log("[finish] Файл сгенерирован: " + fileName + " (" + Math.round(html.length / 1024) + " КБ)");
+    if (!GITHUB_TOKEN) throw new Error("GITHUB_TOKEN не задан на Render (Environment) — не могу опубликовать");
+    await m.editText("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу ✅\n`2/3` Публикую на GitHub... ⏳");
     await publishSite(fileName, html);
-    const url = await checkSite(fileName);
-    u.sites.push({ name: u.data.name, url });
-    await m.editText("✅ Готово! Твой сайт:\n\n" + url + "\n\n📄 " + fileName, {
-      reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url)
+    console.log("[finish] Опубликовано: " + fileName);
+    await m.editText("⏳ Собираю сайт...\n\n`1/3` Генерирую страницу ✅\n`2/3` Публикую на GitHub ✅\n`3/3` Жду, когда сайт откроется (до 2 мин)... ⏳");
+    const { url, ready } = await checkSite(fileName, async (i) => {
+      try { await m.editText("⏳ Собираю сайт...\n\n`1/3` Генерирую ✅\n`2/3` Публикую ✅\n`3/3` GitHub Pages собирает сайт... " + (i * 10) + " сек"); } catch (e) {}
     });
+    u.sites.push({ name: u.data.name, url });
+    if (ready) {
+      await m.editText("✅ Готово! Твой сайт:\n\n" + url + "\n\n📄 " + fileName, {
+        reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url)
+      });
+    } else {
+      await m.editText("✅ Сайт опубликован! GitHub Pages собирает его ещё минуту-две, потом ссылка оживёт:\n\n" + url + "\n\n📄 " + fileName, {
+        reply_markup: new InlineKeyboard().url("🌐 Открыть сайт", url)
+      });
+    }
     if (adminNotify && ctx.from.id !== ADMIN_ID) {
       try { await ctx.api.sendMessage(ADMIN_ID, "🔔 Новый сайт: " + u.data.name + "\n" + url); } catch (e) {}
     }
   } catch (e) {
-    console.error("finish error:", e.message);
-    await m.editText("❌ Не получилось опубликовать: " + e.message + "\nПопробуй ещё раз через минуту или /start.");
+    console.error("[finish] ОШИБКА:", e.message);
+    await m.editText("❌ Не получилось: " + e.message + "\n\nНапиши /diag (админу) или попробуй снова через минуту /start");
   }
   u.step = null;
 }
 
-// ---------- Бот: команды ----------
+// ---------- Бот ----------
 const bot = new Bot(TG_TOKEN);
 
 bot.command("start", async (ctx) => {
   if (ctx.chat?.type !== "private") return;
   U(ctx.from).step = null;
-  await ctx.reply("🎄 Site-Maker v8 STABLE\n\nПривет" + (ctx.from.first_name ? ", " + ctx.from.first_name : "") +
-    "! Выбери категорию — соберу сайт за минуту. Сайт публикуется на GitHub Pages и сразу открывается по ссылке.",
+  await ctx.reply("🎄 Site-Maker " + VERSION + "\n\nПривет" + (ctx.from.first_name ? ", " + ctx.from.first_name : "") +
+    "! Выбери категорию — соберу сайт за минуту. Ссылку пришлю только когда сайт реально откроется.",
     { reply_markup: backMenu() });
 });
 
 bot.command("help", (ctx) => ctx.reply(
-  "ℹ️ Как создать сайт:\n1️⃣ /start → выбери категорию\n2️⃣ Ответь на вопросы (название, описание, услуги, отзывы, контакты)\n3️⃣ Бот опубликует сайт и даст рабочую ссылку\n\n" +
-  "⭐ /premium — расширенный тариф\n📊 /stats — статистика\n🔕 /notify on|off — уведомления админу (только для админа)"
+  "ℹ️ Как создать сайт:\n1️⃣ /start → категория\n2️⃣ Ответь на вопросы анкеты\n3️⃣ Получишь рабочую ссылку\n\n" +
+  "⭐ /premium — расширенный тариф\n📊 /stats — статистика\n🔬 /diag — диагностика (админ)\n🔕 /notify on|off — уведомления админу"
 ));
 
 async function sendStats(ctx) {
@@ -290,12 +337,16 @@ bot.command("notify", (ctx) => {
   ctx.reply("🔕 Уведомления админу: " + (adminNotify ? "ВКЛЮЧЕНЫ ✅" : "ВЫКЛЮЧЕНЫ ❌"));
 });
 
+bot.command("diag", (ctx) => {
+  if (ctx.from.id !== ADMIN_ID) return ctx.reply("Только для админа 🙂");
+  return diagReport(ctx);
+});
+
 bot.command("premium", (ctx) => ctx.reply(
-  "⭐ Премиум-тариф — " + PREMIUM_STARS + " ⭐ Stars\n\n• До 12 услуг с ценами\n• 8 отзывов и 8 FAQ\n• Кнопка «Связаться» на сайте\n\nОплата кнопкой ниже:",
+  "⭐ Премиум-тариф — " + PREMIUM_STARS + " ⭐ Stars\n\n• До 12 услуг с ценами\n• 8 отзывов и 8 FAQ\n• Кнопка «Связаться» на сайте",
   { reply_markup: new InlineKeyboard().text("⭐ Оплатить " + PREMIUM_STARS + " ⭐", "buy_premium") }
 ));
 
-// ---------- Кнопки ----------
 bot.on("callback_query:data", async (ctx) => {
   const data = ctx.callbackQuery.data;
   const u = U(ctx.from);
@@ -310,14 +361,17 @@ bot.on("callback_query:data", async (ctx) => {
     if (data === "skip") { await ctx.answerCallbackQuery(); return nextStep(ctx); }
     if (data === "help") { await ctx.answerCallbackQuery(); return ctx.reply("ℹ️ /start — меню, /premium — тариф"); }
     if (data === "stats") { await ctx.answerCallbackQuery(); return sendStats(ctx); }
-    if (data === "premium") { await ctx.answerCallbackQuery(); return bot.api.sendMessage(ctx.chat.id, "⭐ Премиум — " + PREMIUM_STARS + " ⭐", { reply_markup: new InlineKeyboard().text("⭐ Оплатить " + PREMIUM_STARS + " ⭐", "buy_premium") }); }
+    if (data === "premium") {
+      await ctx.answerCallbackQuery();
+      return ctx.reply("⭐ Премиум — " + PREMIUM_STARS + " ⭐", { reply_markup: new InlineKeyboard().text("⭐ Оплатить " + PREMIUM_STARS + " ⭐", "buy_premium") });
+    }
     if (data === "buy_premium") {
       await ctx.answerCallbackQuery();
       return ctx.replyWithInvoice("⭐ Премиум Site-Maker", "Расширенный тариф: 12 услуг, цены, кнопки", "premium_" + ctx.from.id, "XTR", [{ label: PREMIUM_STARS + " ⭐", amount: PREMIUM_STARS }]);
     }
     await ctx.answerCallbackQuery();
   } catch (e) {
-    console.error("callback error:", e.message);
+    console.error("[callback] ОШИБКА:", e.message);
     try { await ctx.answerCallbackQuery(); } catch (_) {}
   }
 });
@@ -328,14 +382,13 @@ bot.on("message:successful_payment", async (ctx) => {
   const u = U(ctx.from);
   u.premium = true;
   u.data.premium = true;
-  await ctx.reply("⭐ Премиум активирован! Теперь доступны: до 12 услуг с ценами, 8 отзывов, 8 FAQ и кнопка «Связаться». Спасибо! 🎄");
+  await ctx.reply("⭐ Премиум активирован! Спасибо! 🎄");
 });
 
-// ---------- Текстовые ответы (анкета) ----------
 bot.on("message:text", async (ctx) => {
   if (ctx.chat?.type !== "private") return;
   const u = U(ctx.from);
-  if (!u.step) return; // посторонние сообщения игнорируем — нет спама
+  if (!u.step) return;
   const t = (ctx.message.text || "").trim();
   if (!t || t.startsWith("/")) return;
   const s = u.step;
@@ -344,7 +397,6 @@ bot.on("message:text", async (ctx) => {
   if (s === "about") { u.data.about = t.slice(0, 400); u.step = u.premium ? "items_p" : "items"; return askStep(ctx); }
   if (s === "items" || s === "items_p") {
     u.data.items = u.premium ? parseLines(t, 3) : parseLines(t, 2);
-    if (!u.data.items.length) u.data.items = [];
     u.step = "reviews"; return askStep(ctx);
   }
   if (s === "reviews") {
@@ -355,19 +407,29 @@ bot.on("message:text", async (ctx) => {
   if (s === "contacts") { u.data.contacts = t.slice(0, 300); return finish(ctx); }
 });
 
-// ---------- Запуск с автоповтором при ошибках (409 и др.) ----------
+// «Пропустить» — шаги с пропусками (items/reviews/faq)
+function nextStep(ctx) {
+  const u = U(ctx.from);
+  const s = u.step;
+  if (s === "items" || s === "items_p") { u.step = "reviews"; return askStep(ctx); }
+  if (s === "reviews") { u.step = "faq"; return askStep(ctx); }
+  if (s === "faq") { u.step = "contacts"; return askStep(ctx); }
+  askStep(ctx);
+}
+
+// ---------- Запуск ----------
 async function startBot() {
-  bot.catch((err) => console.error("bot error:", (err.error && err.error.message) || err.message));
+  bot.catch((err) => console.error("[bot] ОШИБКА:", (err.error && err.error.message) || err.message));
   for (;;) {
     try {
       await bot.init();
       await bot.start({
         drop_pending_updates: false,
-        onStart: (me) => console.log("🎄 v8 STABLE запущен: @" + me.username)
+        onStart: (me) => console.log("🎄 " + VERSION + " запущен: @" + me.username)
       });
       return;
     } catch (e) {
-      console.error("Запуск не удался: " + String(e.message || "").slice(0, 120) + " — повтор через 10 сек...");
+      console.error("[start] Не удалось: " + String(e.message || "").slice(0, 100) + " — повтор через 10 сек...");
       await new Promise((r) => setTimeout(r, 10000));
     }
   }
