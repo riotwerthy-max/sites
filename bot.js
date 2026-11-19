@@ -160,23 +160,40 @@ function buildSite(d) {
   const name = esc(d.name || "Мой сайт");
   const cat = CATEGORIES[d.category] || CATEGORIES.shop;
   const fileName = slug(d.name) + "-" + crypto.randomBytes(3).toString("hex") + ".html";
-  const nav = ["about", "services", "reviews", "faq", "contacts"].map((a, i) => (
+  const isP = !!d.premium;
+
+const nav = ["about", "services", "reviews", "faq", "contacts"].map((a, i) => (
     `<a href="#${a}">${["О нас", "Услуги", "Отзывы", "FAQ", "Контакты"][i]}</a>`
   )).join("\n");
 
-const items = (d.items || []).slice(0, d.premium ? 12 : 4);
+const items = (d.items || []).slice(0, isP ? 12 : 4);
   const itemsHtml = items.length ? items.map((it) => (
-    `<div class="card"><div class="ph">${esc(it.emoji || cat.emoji)}</div><h3>${esc(it.title)}</h3><p>${esc(it.text || "")}</p>${d.premium && it.price ? `<span class="price">${esc(it.price)}</span>` : ""}</div>`
-  )).join("\n") : `<div class="card"><div class="ph">${cat.emoji}</div><h3>${esc(name)}</h3><p>${esc(d.bonus || "")}</p></div>`;
+    `<article class="card reveal"><span class="emoji">${esc(it.emoji || cat.emoji)}</span><h3>${esc(it.title)}</h3><p>${esc(it.text || "")}</p>${isP && it.price ? `<span class="price">${esc(it.price)}</span>` : ""}</article>`
+  )).join("\n") : `<article class="card reveal"><span class="emoji">${cat.emoji}</span><h3>${esc(name)}</h3><p>${esc(d.bonus || "")}</p></article>`;
 
-const reviews = (d.reviews || []).slice(0, d.premium ? 8 : 3);
+const reviews = (d.reviews || []).slice(0, isP ? 8 : 3);
   const reviewsHtml = reviews.length ? reviews.map((r) => (
-    `<div class="card"><h3>${esc(r.name)}</h3><p>«${esc(r.text)}»</p><span class="stars">★★★★★</span></div>`
+    `<article class="card quote reveal"><h3>${esc(r.name)}</h3><p>«${esc(r.text || "Отличный сервис!")}»</p><span class="stars">★★★★★</span></article>`
   )).join("\n") : "";
 
-const faqHtml = (d.faq || []).slice(0, d.premium ? 8 : 3).map((f) => (
-    `<details><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`
+const faqHtml = (d.faq || []).slice(0, isP ? 8 : 3).map((f) => (
+    `<details class="reveal"><summary>${esc(f.q)}</summary><p>${esc(f.a)}</p></details>`
   )).join("\n");
+
+const raw = String(d.contacts || "");
+  const pm = raw.match(/(\+?\d[\d\s\-()]{6,}\d)/);
+  const phone = pm ? pm[1].trim() : "";
+  const digits = phone.replace(/\D/g, "");
+  let cb = "";
+  if (phone) cb += '<a class="cbtn big pulse" href="tel:' + digits + '">📞 ' + esc(phone) + "</a>";
+  if (digits.length >= 10) cb += '<a class="cbtn wa" target="_blank" rel="noopener" href="https://wa.me/' + digits + '">💬 WhatsApp</a>';
+  const tgm = raw.match(/(?:@|t\.me\/)([A-Za-z0-9_]{4,})/);
+  if (tgm) cb += '<a class="cbtn tg" target="_blank" rel="noopener" href="https://t.me/' + esc(tgm[1]) + '">✈️ Telegram</a>';
+  const igm = raw.match(/instagram\.com\/([A-Za-z0-9_.]+)/i);
+  if (igm) cb += '<a class="cbtn ig" target="_blank" rel="noopener" href="https://instagram.com/' + esc(igm[1]) + '">📸 Instagram</a>';
+  const cbtns = cb ? '<div class="cbtns">' + cb + "</div>" : "";
+
+const ribbon = items.length ? items.map((it) => esc(it.title)).join(" • ") : esc(name);
 
 return { fileName, html: `<!DOCTYPE html>
 <html lang="ru">
@@ -186,44 +203,66 @@ return { fileName, html: `<!DOCTYPE html>
 <title>${name}</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>${cat.emoji}</text></svg>">
 <style>
-:root{--primary:#3a7bd5;--secondary:#00d2ff;--accent:#38bdf8;--text:#f4f7ff;--muted:#a9b9d8;--border:rgba(255,255,255,.13)}
+:root{--primary:#3a7bd5;--secondary:#00d2ff;--accent:#38bdf8;--text:#f4f7ff;--muted:#a9b9d8;--border:rgba(255,255,255,.14)}
 *{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
-body{min-height:100vh;color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.65;background:radial-gradient(circle at 15% 10%,rgba(58,123,213,.22),transparent 28%),radial-gradient(circle at 85% 20%,rgba(0,210,255,.22),transparent 30%),linear-gradient(145deg,#030610,#0a142a 48%,#050914)}
+body{min-height:100vh;color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.65;overflow-x:hidden;background:#030610}
+.bg{position:fixed;inset:0;z-index:-1;background:linear-gradient(145deg,#030610,#0a142a 48%,#050914)}
+.orb{position:fixed;border-radius:50%;filter:blur(70px);opacity:.5;z-index:-1;animation:drift 16s ease-in-out infinite alternate}
+.orb.a{width:420px;height:420px;background:rgba(58,123,213,.4);top:-120px;left:-100px}
+.orb.b{width:360px;height:360px;background:rgba(0,210,255,.35);bottom:-100px;right:-80px;animation-delay:-8s}
+.orb.c{width:260px;height:260px;background:rgba(168,85,247,.3);top:40%;left:60%;animation-delay:-4s}
+@keyframes drift{from{transform:translate(0,0) scale(1)}to{transform:translate(60px,50px) scale(1.15)}}
 .wrap{width:min(1120px,calc(100% - 32px));margin:auto}
 nav{position:sticky;top:0;z-index:40;display:flex;justify-content:center;flex-wrap:wrap;gap:8px;padding:14px 18px;background:rgba(5,9,20,.72);border-bottom:1px solid var(--border);backdrop-filter:blur(18px)}
 nav a{color:#dbe7ff;text-decoration:none;font-size:.86rem;padding:7px 14px;border:1px solid var(--border);border-radius:999px;transition:.25s}
-nav a:hover{color:#fff;border-color:var(--accent)}
-section{padding:64px 0}
-h1{font-size:clamp(2rem,5vw,3.4rem);margin-bottom:14px}
-h2{font-size:clamp(1.4rem,3vw,2rem);margin-bottom:24px;text-align:center}
+nav a:hover{color:#fff;border-color:var(--accent);box-shadow:0 0 18px rgba(56,189,248,.35);transform:translateY(-2px)}
+section{padding:70px 0}
+h2{font-size:clamp(1.4rem,3vw,2rem);margin-bottom:26px;text-align:center}
 p{color:var(--muted)}
-.hero{display:grid;place-items:center;text-align:center;padding:100px 24px 76px;border:1px solid var(--border);border-radius:34px;margin-top:28px;background:linear-gradient(135deg,rgba(12,24,52,.9),rgba(8,13,31,.76));box-shadow:0 30px 90px rgba(0,0,0,.36)}
-.badge{display:inline-block;background:rgba(56,189,248,.14);border:1px solid var(--accent);color:var(--accent);padding:6px 14px;border-radius:999px;font-size:.85rem;margin-bottom:18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;margin-top:28px}
-.card{background:rgba(13,24,48,.72);border:1px solid var(--border);border-radius:20px;padding:26px;transition:.25s}
-.card:hover{transform:translateY(-4px);border-color:var(--accent)}
-.ph{font-size:2.2rem;margin-bottom:10px}
-.price{display:inline-block;margin-top:10px;color:var(--accent);font-weight:600}
-.stars{color:#fbbf24}
-details{background:rgba(13,24,48,.72);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:12px}
-summary{cursor:pointer;font-weight:600}
+.hero{display:grid;place-items:center;text-align:center;padding:110px 24px 84px;border:1px solid var(--border);border-radius:34px;margin-top:28px;background:linear-gradient(135deg,rgba(12,24,52,.92),rgba(8,13,31,.78));box-shadow:0 30px 90px rgba(0,0,0,.4);overflow:hidden;position:relative}
+.hero:before{content:"";position:absolute;top:-60%;left:-60%;width:80%;height:220%;background:conic-gradient(from 0deg,transparent,rgba(56,189,248,.16),transparent 40%);animation:spin 7s linear infinite}
+@keyframes spin{to{transform:rotate(1turn)}}
+.badge{display:inline-block;background:rgba(56,189,248,.14);border:1px solid var(--accent);color:var(--accent);padding:6px 16px;border-radius:999px;font-size:.85rem;margin-bottom:20px}
+h1{font-size:clamp(2.1rem,6vw,3.6rem);margin-bottom:16px;background:linear-gradient(90deg,#fff,var(--accent),#a78bfa,#fff);background-size:280% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}
+@keyframes shine{to{background-position:280% center}}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:18px;margin-top:30px}
+.card{background:rgba(13,24,48,.74);border:1px solid var(--border);border-radius:20px;padding:28px;transition:.3s;position:relative;overflow:hidden}
+.card:before{content:"";position:absolute;inset:0;background:radial-gradient(300px circle at var(--mx,50%) var(--my,0%),rgba(56,189,248,.14),transparent 45%);opacity:0;transition:.3s}
+.card:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:0 18px 48px rgba(0,0,0,.5)}
+.card:hover:before{opacity:1}
+.emoji{font-size:2.3rem;display:inline-block;animation:float 3.6s ease-in-out infinite}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.price{display:inline-block;margin-top:12px;color:var(--accent);font-weight:700;font-size:1.05rem}
+.quote p{color:var(--text)}
+.stars{color:#fbbf24;letter-spacing:2px}
+details{background:rgba(13,24,48,.74);border:1px solid var(--border);border-radius:14px;padding:18px 22px;margin-bottom:12px;transition:.25s}
+details[open]{border-color:var(--accent);box-shadow:0 0 24px rgba(56,189,248,.18)}
+summary{cursor:pointer;font-weight:600;list-style:none}
 details p{margin-top:10px}
+.marquee{overflow:hidden;border-block:1px solid var(--border);padding:16px 0;margin-top:8px}
+.marquee span{display:inline-block;white-space:nowrap;font-weight:600;color:var(--muted);animation:slide 22s linear infinite}
+@keyframes slide{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 .cbtns{display:flex;flex-wrap:wrap;justify-content:center;gap:14px;margin-top:26px}
-.btn{display:inline-flex;align-items:center;gap:8px;margin-top:22px;padding:14px 32px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff;text-decoration:none;font-weight:600;transition:.25s}
-.btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 12px 32px rgba(56,189,248,.35)}
-.btn.big{margin:0;padding:16px 34px;font-size:1.05rem}
-.btn.wa{background:linear-gradient(90deg,#25d366,#128c7e)}
-.btn.tg{background:linear-gradient(90deg,#38bdf8,#0284c7)}
-.btn.ig{background:linear-gradient(90deg,#f58529,#dd2a7b)}
+.cbtn{display:inline-flex;align-items:center;gap:8px;padding:13px 28px;border-radius:999px;color:#fff;text-decoration:none;font-weight:600;transition:.25s}
+.cbtn:hover{transform:translateY(-3px) scale(1.04)}
+.cbtn.big{background:linear-gradient(90deg,var(--primary),var(--secondary))}
+.cbtn.wa{background:linear-gradient(90deg,#25d366,#128c7e)}
+.cbtn.tg{background:linear-gradient(90deg,#38bdf8,#0284c7)}
+.cbtn.ig{background:linear-gradient(90deg,#f58529,#dd2a7b)}
 @keyframes pulse{0%{box-shadow:0 0 0 0 rgba(56,189,248,.5)}70%{box-shadow:0 0 0 16px rgba(56,189,248,0)}100%{box-shadow:0 0 0 0 rgba(56,189,248,0)}}
 .pulse{animation:pulse 2.2s infinite}
-
-footer{border-top:1px solid var(--border);margin-top:60px;padding:34px 0;text-align:center;color:var(--muted);font-size:.9rem}
-@media(max-width:640px){section{padding:44px 0}}
+.btn{display:inline-flex;align-items:center;gap:8px;margin-top:24px;padding:15px 36px;border-radius:999px;background:linear-gradient(90deg,var(--primary),var(--secondary));color:#fff;text-decoration:none;font-weight:700;font-size:1.05rem;transition:.25s}
+.btn:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 14px 36px rgba(56,189,248,.4)}
+.reveal{opacity:0;transform:translateY(26px);transition:.7s cubic-bezier(.2,.7,.3,1)}
+.reveal.on{opacity:1;transform:none}
+footer{border-top:1px solid var(--border);margin-top:60px;padding:36px 0;text-align:center;color:var(--muted);font-size:.9rem}
+@media(max-width:640px){section{padding:48px 0}.hero{padding:70px 18px 56px}}
 </style>
 </head>
 <body>
+<div class="bg"></div>
+<div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
 <nav class="wrap">${nav}</nav>
 <div class="wrap">
 <section class="hero" id="top">
@@ -232,29 +271,27 @@ footer{border-top:1px solid var(--border);margin-top:60px;padding:34px 0;text-al
 <p>${esc(d.bonus || "")}</p>
 <a class="btn pulse" href="#contacts">Связаться</a>
 </section>
-<section id="about"><h2>О нас</h2><p>${esc(d.about || "Расскажите о своей компании в двух словах.")}</p></section>
+<div class="marquee"><span>${ribbon} • ${ribbon} • </span></div>
+<section id="about"><h2>О нас</h2><p class="reveal">${esc(d.about || "Расскажите о своей компании в двух словах.")}</p></section>
 <section id="services"><h2>Услуги</h2><div class="grid">${itemsHtml}</div></section>
 ${reviewsHtml ? `<section id="reviews"><h2>Отзывы</h2><div class="grid">${reviewsHtml}</div></section>` : ""}
 ${faqHtml ? `<section id="faq"><h2>Частые вопросы</h2>${faqHtml}</section>` : ""}
-<section id="contacts"><h2>Контакты</h2><p>${esc(d.contacts || "Телефон, адрес и соцсети добавьте здесь.")}</p>
-${(() => {
-  const raw = String(d.contacts || "");
-  const pm = raw.match(/(\+?\d[\d\s\-()]{6,}\d)/);
-  const phone = pm ? pm[1].trim() : "";
-  const digits = phone.replace(/\D/g, "");
-  let btns = "";
-  if (phone) btns += `\n<a class="btn big pulse" href="tel:${digits}">📞 ${esc(phone)}</a>`;
-  if (digits.length >= 10) btns += `\n<a class="btn wa" target="_blank" rel="noopener" href="https://wa.me/${digits}">💬 WhatsApp</a>`;
-  const tg = raw.match(/(?:@|t\.me\/)([A-Za-z0-9_]{4,})/);
-  if (tg) btns += `\n<a class="btn tg" target="_blank" rel="noopener" href="https://t.me/${esc(tg[1])}">✈️ Telegram</a>`;
-  const ig = raw.match(/instagram\.com\/([A-Za-z0-9_.]+)/i);
-  if (ig) btns += `\n<a class="btn ig" target="_blank" rel="noopener" href="https://instagram.com/${esc(ig[1])}">📸 Instagram</a>`;
-  return btns ? `<div class="cbtns">${btns}\n</div>` : "";
-})()}
+<section id="contacts" class="reveal"><h2>Контакты</h2><p>${esc(d.contacts || "Телефон, адрес и соцсети добавьте здесь.")}</p>
+${cbtns}
 </section>
-
-<footer>${d.premium ? "© " + name : "Сделано с 🎄 Site-Maker"}</footer>
+<footer>${isP ? "© " + name : "Сделано с 🎄 Site-Maker"}</footer>
 </div>
+<script>
+document.querySelectorAll(".card").forEach((c) => {
+  c.addEventListener("mousemove", (e) => {
+    const r = c.getBoundingClientRect();
+    c.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    c.style.setProperty("--my", (e.clientY - r.top) + "px");
+  });
+});
+const io = new IntersectionObserver((es) => es.forEach((e) => { if (e.isIntersecting) e.target.classList.add("on"); }), { threshold: .12 });
+document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+</script>
 </body>
 </html>` };
 }
