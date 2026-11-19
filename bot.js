@@ -388,13 +388,12 @@ async function finish(ctx) {
 }
 
 // ---------- Бот ----------
+const bot = new Bot(TG_TOKEN);
+
 bot.use((ctx, next) => {
   console.log("[update] от " + (ctx.from ? ctx.from.id : "?") + ": " + (ctx.message?.text || ctx.callbackQuery?.data || "…"));
   return next();
 });
-
-const bot = new Bot(TG_TOKEN);
-
 bot.command("start", async (ctx) => {
   if (ctx.chat?.type !== "private") return;
   U(ctx.from).step = null;
