@@ -45,10 +45,36 @@ http.createServer((req, res) => {
 // ---------- Пользователи ----------
 const users = new Map();
 function U(from) {
-  if (!users.has(from.id)) users.set(from.id, { step: null, data: {}, sites: [], premium: false });
-  return users.get(from.id);
+  if (!users.has(from.id)) users.set(from.id, { step: null, data: {}, sites: [], premium: false, trialUsed: false, premiumUntil: 0 });
+  const u = users.get(from.id);
+  if (u.premiumUntil && Date.now() > u.premiumUntil) { u.premium = false; u.premiumUntil = 0; }
+  return u;
 }
 let adminNotify = false;
+
+// ---------- Пробный премиум 5 минут ----------
+async function startTrial(ctx) {
+  const u = U(ctx.from);
+  if (u.premium) return ctx.reply("⭐ У тебя уже активен премиум!");
+  if (ctx.from.id === ADMIN_ID) {
+    u.premium = true;
+    u.premiumUntil = 0;
+    return ctx.reply("👑 Премиум админа активирован навсегда! 🎄");
+  }
+  if (u.trialUsed) return ctx.reply("🎁 Пробный премиум можно взять только один раз.\n\n⭐ Навсегда: /premium");
+  u.trialUsed = true;
+  u.premium = true;
+  u.premiumUntil = Date.now() + 5 * 60 * 1000;
+  await ctx.reply("⭐ ПРЕМИУМ НА 5 МИНУТ АКТИВЕН!\n\n• До 12 услуг с ценами\n• 8 отзывов и 8 FAQ\n• Кнопка «Связаться» на сайте\n\n⏱ Успей собрать сайт: /start");
+  setTimeout(() => {
+    if (u.premiumUntil && Date.now() >= u.premiumUntil) {
+      u.premium = false;
+      u.premiumUntil = 0;
+      ctx.api.sendMessage(ctx.from.id, "⏰ Пробный премиум закончился. Спасибо, что попробовал! ⭐ Полный: /premium").catch(() => {});
+    }
+  }, 5 * 60 * 1000);
+}
+
 
 const CATEGORIES = {
   shop:    { title: "🛍 Магазин",       emoji: "🛍" },
