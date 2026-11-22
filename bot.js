@@ -562,3 +562,82 @@ async function startBot() {
   }
 }
 startBot();
+// ===== 4CUT: нарезка эпичных моментов =====
+const youtubedl = require("youtube-dl-exec");
+const ffmpegPath = require("ffmpeg-static");
+const os = require("os");
+const path = require("path");
+const fs = require("fs");
+
+const cutJobs = new Map();
+const CUT_DURATIONS = [15, 30, 45, 60];
+
+bot.command("cut", async (ctx) => {
+  const url = (ctx.message.text.match(/https?:\/\/\S+/) || [])[0];
+  if (!url) {
+    return ctx.reply("🎬 Пришли ссылку так:\n\n`/cut https://youtu.be/...`", { parse_mode: "Markdown" });
+  }
+  const wait = await ctx.reply("🔍 Анализирую видео, ищу самый залетевший момент...");
+  try {
+    const info = await youtubedl(url, {
+      dumpSingleJson: true,
+      noPlaylist: true,
+      noWarnings: true,
+    });
+    const dur = Math.floor(info.duration || 0);
+    let start;
+    const hm = info.heatmap;
+    if (hm && hm.length) {
+      // пик «самых пересматриваемых» — эпичный момент по данным зрителей
+      const best = hm.reduce((a, b) => (b.value > a.value ? b : a));
+      start = Math.max(0, Math.floor(best.start_time - 2));
+    } else {
+      start = Math.floor(dur * 0.4); // запасной вариант: середина
+    }
+    const jobId = Date.now().toString(36);
+    cutJobs.set(jobId, { url, start, ts: jobId });
+    setTimeout(() => cutJobs.delete(jobId), 10 * 60 * 1000);
+    await ctx.api.editMessageText(
+      ctx.chat.id, wait.message_id,
+      `⏱ Видео: ${Math.floor(dur / 60)} мин. С какого размера нарезать?\n\nСколько секунд должно длиться видео?`,
+      { reply_markup: { inline_keyboard: CUT_DURATIONS.map(s => ([{
+        text: `✂️ ${s} сек`, callback_data: `cut:${jobId}:${s}`,
+      }])) } }
+    );
+  } catch (e) {
+    await ctx.api.editMessageText(ctx.chat.id, wait.message_id,
+      "❌ Не смог открыть видео. Проверь ссылку — видео должно быть публичным.");
+  }
+});
+
+bot.on("callback_query", async (ctx) => {
+  if (!ctx.callbackQuery.data.startsWith("cut:")) return;
+  await ctx.answerCbQuery();
+  const [, jobId, secs] = ctx.callbackQuery.data.split(":");
+  const job = cutJobs.get(jobId);
+  if (!job) return ctx.reply("⌛ Заявка устарела, пришли ссылку ещё раз: /cut");
+  cutJobs.delete(jobId);
+  const msg = await ctx.reply(`⏳ Режу ${secs} сек из эпичного места...\n(2–5 минут, не спеши)`);
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "cut-"));
+  try {
+    await youtubedl(job.url, {
+      output: path.join(dir, "clip.mp4"),
+      downloadSections: `*${job.start}-${job.start + Number(secs) + 3}`,
+      ffmpegLocation: ffmpegPath,
+      format: "bv*[height<=720]+ba/b",
+      mergeOutputFormat: "mp4",
+      noPlaylist: true,
+      maxFilesize: "80M",
+    });
+    await ctx.api.editMessageText(ctx.chat.id, msg.message_id, "✅ Готово! Отправляю...");
+    await ctx.replyWithVideo(
+      { source: fs.createReadStream(path.join(dir, "clip.mp4")) },
+      { caption: "✂️ Эпичный момент · @" + (ctx.botInfo.username || "bot") }
+    );
+  } catch (e) {
+    await ctx.api.editMessageText(ctx.chat.id, msg.message_id,
+      "❌ Не получилось нарезать (видео слишком длинное или YouTube сопротивляется). Попробуй другое видео.");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
